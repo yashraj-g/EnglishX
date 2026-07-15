@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routes.speech import router as speech_router
 from app.routes.health import router as health_router
+from app.otel import init_otel
 
 logging.basicConfig(
     level=logging.INFO,
@@ -20,6 +21,8 @@ app = FastAPI(
     docs_url="/speech/docs",
     redoc_url="/speech/redoc",
 )
+
+init_otel(app)
 
 app.add_middleware(
     CORSMiddleware,

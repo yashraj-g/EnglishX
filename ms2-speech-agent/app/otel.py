@@ -1,11 +1,16 @@
 """OpenTelemetry setup for ms2-speech-agent."""
 import logging
-from app.config import settings
+from fastapi import FastAPI
+
+try:
+    from app.config import settings
+except ImportError:
+    # Fallback for IDEs or direct script execution
+    from config import settings
 
 logger = logging.getLogger(__name__)
 
-
-def init_otel(app):
+def init_otel(app: FastAPI):
     """Initialize OpenTelemetry tracing for the FastAPI app."""
     if not settings.otel_exporter_otlp_endpoint:
         logger.info("OpenTelemetry: No endpoint configured, tracing disabled")
