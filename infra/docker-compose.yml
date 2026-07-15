@@ -1,23 +1,23 @@
 version: "3.8"
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: englishx
-      POSTGRES_USER: englishx
-      POSTGRES_PASSWORD: englishx_dev
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U englishx"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+#   # PostgreSQL Database
+#   postgres:
+#     image: postgres:16-alpine
+#     environment:
+#       POSTGRES_DB: englishx
+#       POSTGRES_USER: englishx
+#       POSTGRES_PASSWORD: englishx_dev
+#     ports:
+#       - "5432:5432"
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+#       - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U englishx"]
+#       interval: 5s
+#       timeout: 5s
+#       retries: 5
 
   # ms1 — Core API (Express.js)
   ms1-core-api:
@@ -27,7 +27,8 @@ services:
     environment:
       - PORT=3001
       - NODE_ENV=development
-      - DATABASE_URL=postgresql://englishx:englishx_dev@postgres:5432/englishx
+      - NODE_OPTIONS=--dns-result-order=ipv4first
+      - DATABASE_URL=postgresql://postgres.ifbeuwuhnpglbdnybxyw:Hello_world!!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres
       - JWT_ACCESS_SECRET=dev-access-secret-change-in-prod
       - JWT_REFRESH_SECRET=dev-refresh-secret-change-in-prod
       - JWT_ACCESS_EXPIRY=15m
@@ -36,9 +37,6 @@ services:
       - FROM_EMAIL=onboarding@resend.dev
       - MS2_BASE_URL=http://ms2-speech-agent:8000
       - FRONTEND_URL=http://localhost:3000
-    depends_on:
-      postgres:
-        condition: service_healthy
     restart: unless-stopped
 
   # ms2 — Speech Agent (FastAPI + LangGraph)
@@ -60,6 +58,7 @@ services:
       - "3000:3000"
     environment:
       - PORT=3000
+      - HOSTNAME=0.0.0.0
     restart: unless-stopped
 
   # NGINX Reverse Proxy

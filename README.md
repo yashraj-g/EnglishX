@@ -19,7 +19,7 @@ EnglishX/ (monorepo)
 | Frontend | Next.js (App Router) |
 | ms1 — Core API | Express.js, JWT auth, PostgreSQL |
 | ms2 — Speech Agent | FastAPI, LangGraph, Gemini API |
-| Database | PostgreSQL (Neon serverless) |
+| Database | PostgreSQL (Supabase) |
 | STT | Deepgram API |
 | TTS | Browser Web Speech API |
 | Email | Resend |
@@ -74,7 +74,7 @@ cd frontend && npm run dev
 | **Deepgram** | https://deepgram.com | Speech-to-Text ($200 free credits) |
 | **Google AI Studio** | https://aistudio.google.com | Gemini LLM (free tier) |
 | **Resend** | https://resend.com | Email invites & reminders (100/day free) |
-| **Neon** | https://neon.tech | PostgreSQL hosting (0.5 GB free) |
+| **Supabase** | https://supabase.com | PostgreSQL hosting |
 | **Grafana Cloud** | https://grafana.com | OpenTelemetry traces (free tier) |
 
 Add keys to `.env` files in `ms1-core-api/` and `ms2-speech-agent/`.

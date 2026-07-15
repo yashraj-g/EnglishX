@@ -5,7 +5,7 @@ pydantic-settings==2.9.1
 python-dotenv==1.1.1
 httpx==0.28.1
 python-multipart==0.0.20
-langgraph==0.5.2
+langgraph>=0.5.3
 langchain==0.3.30
 langchain-google-genai==2.1.6
 deepgram-sdk==3.10.1

@@ -33,8 +33,14 @@ CREATE TABLE IF NOT EXISTS batches (
 );
 
 -- Add foreign key to users after batches exists
-ALTER TABLE users ADD CONSTRAINT fk_users_batch
-    FOREIGN KEY (batch_id) REFERENCES batches(id) ON DELETE SET NULL;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_users_batch') THEN
+        ALTER TABLE users ADD CONSTRAINT fk_users_batch
+            FOREIGN KEY (batch_id) REFERENCES batches(id) ON DELETE SET NULL;
+    END IF;
+END $$;
+
 
 -- Invites table
 CREATE TABLE IF NOT EXISTS invites (
