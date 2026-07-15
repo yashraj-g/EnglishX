@@ -31,7 +31,7 @@ def get_llm():
     if not settings.google_api_key or settings.google_api_key == "your-gemini-api-key":
         return None
     return ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-3.5-flash",
         google_api_key=settings.google_api_key,
         temperature=0.3,
         max_output_tokens=1500,

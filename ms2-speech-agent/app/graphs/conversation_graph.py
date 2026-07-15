@@ -71,7 +71,7 @@ def get_llm():
         logger.warning("Gemini API key not configured — conversation will use mock responses")
         return None
     return ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-3.5-flash",
         google_api_key=settings.google_api_key,
         temperature=0.7,
         max_output_tokens=200,
