@@ -24,17 +24,12 @@ services:
     build: ../ms1-core-api
     ports:
       - "3001:3001"
+    env_file:
+      - ../ms1-core-api/.env
     environment:
       - PORT=3001
       - NODE_ENV=development
       - NODE_OPTIONS=--dns-result-order=ipv4first
-      - DATABASE_URL=postgresql://postgres.ifbeuwuhnpglbdnybxyw:Hello_world!!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres
-      - JWT_ACCESS_SECRET=dev-access-secret-change-in-prod
-      - JWT_REFRESH_SECRET=dev-refresh-secret-change-in-prod
-      - JWT_ACCESS_EXPIRY=15m
-      - JWT_REFRESH_EXPIRY=7d
-      - RESEND_API_KEY=re_xxxxxxxxxxxx
-      - FROM_EMAIL=onboarding@resend.dev
       - MS2_BASE_URL=http://ms2-speech-agent:8000
       - FRONTEND_URL=http://localhost:3000
     restart: unless-stopped
@@ -44,10 +39,10 @@ services:
     build: ../ms2-speech-agent
     ports:
       - "8000:8000"
+    env_file:
+      - ../ms2-speech-agent/.env
     environment:
       - PORT=8000
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-your-gemini-api-key}
-      - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY:-your-deepgram-api-key}
       - MS1_BASE_URL=http://ms1-core-api:3001
     restart: unless-stopped
 
