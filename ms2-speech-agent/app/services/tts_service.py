@@ -49,9 +49,11 @@ class TTSService:
                 encoding="mp3",
             )
 
-            # stream_memory returns a SpeakRESTResponse whose .stream_memory
-            # attribute is a BytesIO buffer containing the full MP3 audio.
-            response = self.client.speak.rest.v("1").stream_memory(
+            # SpeakRESTResponse speak.rest is a blocking synchronous network call.
+            # Running it via asyncio.to_thread prevents it from blocking the FastAPI event loop.
+            import asyncio
+            response = await asyncio.to_thread(
+                self.client.speak.rest.v("1").stream_memory,
                 {"text": text},
                 options,
             )

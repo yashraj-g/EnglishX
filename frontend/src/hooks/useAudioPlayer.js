@@ -34,38 +34,20 @@ export function useAudioPlayer() {
       stopSpeaking();
 
       try {
-        const res = await fetch('/speech/tts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, model }),
-        });
-
-        // 204 means Deepgram is not configured — skip silently
-        if (res.status === 204) return;
-
-        if (!res.ok) {
-          console.warn('TTS request failed:', res.status);
-          return;
-        }
-
-        const audioBlob = await res.blob();
-        const audioUrl = URL.createObjectURL(audioBlob);
-
-        const audio = new Audio(audioUrl);
+        const url = `/speech/tts?text=${encodeURIComponent(text)}&model=${model}`;
+        const audio = new Audio(url);
         audioRef.current = audio;
         setIsSpeaking(true);
 
         audio.onended = () => {
-          URL.revokeObjectURL(audioUrl);
           setIsSpeaking(false);
           audioRef.current = null;
         };
 
         audio.onerror = () => {
-          URL.revokeObjectURL(audioUrl);
           setIsSpeaking(false);
           audioRef.current = null;
-          console.warn('Audio playback error');
+          console.warn('Audio playback error or Deepgram not configured');
         };
 
         await audio.play();

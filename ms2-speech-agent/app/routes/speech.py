@@ -149,3 +149,36 @@ async def text_to_speech(request: TTSRequest):
     except Exception as e:
         logger.error(f"TTS failed: {e}")
         raise HTTPException(status_code=500, detail=f"TTS failed: {str(e)}")
+
+
+@router.get("/tts")
+async def text_to_speech_get(text: str, model: str = "aura-asteria-en"):
+    """Convert AI reply text to speech using Deepgram Aura TTS via GET.
+
+    Returns MP3 audio bytes as an audio/mpeg StreamingResponse.
+    The frontend can set this URL directly as an Audio source to enable fast streaming.
+    """
+    try:
+        if not text or not text.strip():
+            raise HTTPException(status_code=400, detail="Text is required")
+
+        audio_bytes = await tts_service.synthesize(text, model)
+
+        if not audio_bytes:
+            from fastapi.responses import Response
+            return Response(status_code=204)
+
+        return StreamingResponse(
+            io.BytesIO(audio_bytes),
+            media_type="audio/mpeg",
+            headers={
+                "Content-Length": str(len(audio_bytes)),
+                "Cache-Control": "no-cache",
+            },
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"TTS failed: {e}")
+        raise HTTPException(status_code=500, detail=f"TTS failed: {str(e)}")
