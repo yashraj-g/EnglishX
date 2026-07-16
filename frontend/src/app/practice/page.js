@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { startSession, endSession, processTurn, analyzeSession, saveSessionFeedback } from '@/lib/api';
 import styles from './practice.module.css';
 
@@ -17,6 +18,7 @@ export default function PracticePage() {
   const { user, token, loading: authLoading } = useAuth();
   const router = useRouter();
   const { isRecording, error: micError, startRecording, stopRecording, cancelRecording } = useAudioRecorder();
+  const { isSpeaking, playTTS, stopSpeaking } = useAudioPlayer();
 
   const [phase, setPhase] = useState('select'); // select | conversation | analyzing | feedback
   const [selectedMode, setSelectedMode] = useState(null);
@@ -37,17 +39,10 @@ export default function PracticePage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // TTS playback
+  // TTS playback — uses Deepgram Aura via /speech/tts endpoint
   const speak = useCallback((text) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      utterance.rate = 0.9;
-      utterance.pitch = 1.0;
-      window.speechSynthesis.speak(utterance);
-    }
-  }, []);
+    playTTS(text);
+  }, [playTTS]);
 
   async function handleStartSession(mode) {
     setSelectedMode(mode);
@@ -384,6 +379,14 @@ export default function PracticePage() {
               <div className={`${styles.msgBubble} ${styles.typing}`}>
                 <span /><span /><span />
               </div>
+            </div>
+          )}
+          {isSpeaking && !processing && (
+            <div className={styles.speakingIndicator}>
+              <span className={styles.speakingDot} />
+              <span className={styles.speakingDot} />
+              <span className={styles.speakingDot} />
+              <span className={styles.speakingText}>Speaking...</span>
             </div>
           )}
           <div ref={chatEndRef} />

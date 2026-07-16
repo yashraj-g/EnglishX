@@ -29,3 +29,8 @@ class AnalyzeRequest(BaseModel):
     transcript: list[dict]
     mode: SessionMode = SessionMode.FREE_TALK
     learner_level: int = Field(default=2, ge=1, le=6)
+
+
+class TTSRequest(BaseModel):
+    text: str
+    model: str = "aura-asteria-en"

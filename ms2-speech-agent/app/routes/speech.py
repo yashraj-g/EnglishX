@@ -1,9 +1,12 @@
 """Speech routes for ms2."""
+import io
 import logging
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 
-from app.schemas.speech import TurnRequest, TurnResponse, AnalyzeRequest
+from app.schemas.speech import TurnRequest, TurnResponse, AnalyzeRequest, TTSRequest
 from app.services.stt_service import stt_service
+from app.services.tts_service import tts_service
 from app.graphs.conversation_graph import conversation_graph, ConversationState
 from app.graphs.feedback_pipeline import feedback_pipeline, FeedbackState
 from app.graphs.placement_grader import grade_placement
@@ -110,3 +113,39 @@ async def run_placement(request: AnalyzeRequest):
     except Exception as e:
         logger.error(f"Placement grading failed: {e}")
         raise HTTPException(status_code=500, detail=f"Placement failed: {str(e)}")
+
+
+@router.post("/tts")
+async def text_to_speech(request: TTSRequest):
+    """Convert AI reply text to speech using Deepgram Aura TTS.
+
+    Returns MP3 audio bytes as an audio/mpeg StreamingResponse.
+    The frontend fetches this endpoint right after receiving an AI reply
+    and plays the audio through the Web Audio API.
+    """
+    try:
+        if not request.text or not request.text.strip():
+            raise HTTPException(status_code=400, detail="Text is required")
+
+        audio_bytes = await tts_service.synthesize(request.text, request.model)
+
+        if not audio_bytes:
+            # Deepgram not configured — return 204 No Content so the frontend
+            # can gracefully skip playback without throwing an error.
+            from fastapi.responses import Response
+            return Response(status_code=204)
+
+        return StreamingResponse(
+            io.BytesIO(audio_bytes),
+            media_type="audio/mpeg",
+            headers={
+                "Content-Length": str(len(audio_bytes)),
+                "Cache-Control": "no-cache",
+            },
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"TTS failed: {e}")
+        raise HTTPException(status_code=500, detail=f"TTS failed: {str(e)}")
