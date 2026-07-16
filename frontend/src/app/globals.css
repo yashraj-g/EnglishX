@@ -472,3 +472,8 @@ a:hover { color: var(--primary-300); }
   border: 1px solid rgba(16,185,129,0.3);
   color: var(--accent-400);
 }
+
+/* Prevent Caret (Text Cursor) from displaying in non-editable texts */
+body *:not(input):not(textarea):not([contenteditable]) {
+  caret-color: transparent !important;
+}

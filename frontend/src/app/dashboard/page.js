@@ -33,6 +33,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [errorStatus, setErrorStatus] = useState(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -40,11 +41,14 @@ export default function DashboardPage() {
     if (user.role === 'admin') { router.push('/admin'); return; }
 
     async function fetchDashboard() {
+      setLoading(true);
+      setErrorStatus(null);
       try {
         const data = await getLearnerDashboard(token);
         setDashboard(data);
       } catch (err) {
         console.error('Dashboard fetch failed:', err);
+        setErrorStatus(err.status || 500);
       }
       setLoading(false);
     }
@@ -63,12 +67,49 @@ export default function DashboardPage() {
     );
   }
 
-  if (!dashboard) {
+  if (errorStatus === 401) {
+    return (
+      <div className={styles.page}>
+        <div className="container" style={{ textAlign: 'center', paddingTop: '100px' }}>
+          <h2>Session Expired</h2>
+          <p className="text-secondary" style={{ marginBottom: '24px' }}>
+            Your session has expired. Please log in again to access your dashboard.
+          </p>
+          <button className="btn btn-primary" onClick={() => router.push('/login')}>
+            🔑 Log In Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (errorStatus || !dashboard) {
     return (
       <div className={styles.page}>
         <div className="container" style={{ textAlign: 'center', paddingTop: '100px' }}>
           <h2>Unable to load dashboard</h2>
-          <p className="text-secondary">Please check your connection and try again.</p>
+          <p className="text-secondary" style={{ marginBottom: '24px' }}>
+            Please check your connection and try again.
+          </p>
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              setErrorStatus(null);
+              setLoading(true);
+              getLearnerDashboard(token)
+                .then(data => {
+                  setDashboard(data);
+                  setLoading(false);
+                })
+                .catch(err => {
+                  console.error('Retry failed:', err);
+                  setErrorStatus(err.status || 500);
+                  setLoading(false);
+                });
+            }}
+          >
+            🔄 Try Again
+          </button>
         </div>
       </div>
     );
