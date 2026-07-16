@@ -48,12 +48,18 @@ services:
 
   # Next.js Frontend
   frontend:
-    build: ../frontend
+    build:
+      context: ../frontend
+      args:
+        - MS1_URL=http://ms1-core-api:3001
+        - MS2_URL=http://ms2-speech-agent:8000
     ports:
       - "3000:3000"
     environment:
       - PORT=3000
       - HOSTNAME=0.0.0.0
+      - MS1_URL=http://ms1-core-api:3001
+      - MS2_URL=http://ms2-speech-agent:8000
     restart: unless-stopped
 
   # NGINX Reverse Proxy

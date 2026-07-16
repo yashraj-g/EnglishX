@@ -2,7 +2,7 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(10, 14, 26, 0.85);
+  background: rgba(8, 8, 10, 0.85);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -24,12 +24,11 @@
   color: var(--text-primary);
 }
 
-.logoIcon {
-  font-size: 1.5rem;
-  background: var(--gradient-hero);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.logoImage {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
 }
 
 .logoText {
@@ -54,17 +53,21 @@
   font-size: 0.875rem;
   font-weight: 500;
   text-decoration: none;
+  border: 1px solid transparent;
   transition: all var(--transition-fast);
 }
 
 .link:hover {
-  color: var(--text-primary);
-  background: var(--bg-glass);
+  color: #00f3ff;
+  background: rgba(0, 243, 255, 0.05);
+  border-color: rgba(0, 243, 255, 0.15);
 }
 
 .active {
-  color: var(--primary-400) !important;
-  background: rgba(99,102,241,0.1);
+  color: #00f3ff !important;
+  background: rgba(0, 243, 255, 0.12) !important;
+  border-color: rgba(0, 243, 255, 0.25) !important;
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
 }
 
 .practiceIcon {

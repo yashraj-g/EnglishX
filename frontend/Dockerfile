@@ -1,5 +1,10 @@
 FROM node:20-alpine AS builder
 
+ARG MS1_URL
+ARG MS2_URL
+ENV MS1_URL=${MS1_URL}
+ENV MS2_URL=${MS2_URL}
+
 WORKDIR /app
 
 COPY package*.json ./

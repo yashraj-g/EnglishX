@@ -78,6 +78,13 @@ export default function AdminPage() {
     }
   }
 
+  function copyInviteLink(inviteToken) {
+    const link = `${window.location.origin}/join?token=${inviteToken}`;
+    navigator.clipboard.writeText(link);
+    setFormSuccess('Invite link copied to clipboard!');
+    setTimeout(() => setFormSuccess(''), 4000);
+  }
+
   if (authLoading || loading) {
     return (
       <div className={styles.page}>
@@ -241,7 +248,18 @@ export default function AdminPage() {
             <div className={styles.inviteList}>
               {invites.map(inv => (
                 <div key={inv.id} className={`card ${styles.inviteItem}`}>
-                  <div>{inv.email}</div>
+                  <div>
+                    <div>{inv.email}</div>
+                    {inv.status === 'pending' && (
+                      <button
+                        className="btn btn-ghost btn-xs"
+                        style={{ marginTop: '6px', fontSize: '0.75rem', padding: '2px 8px', textTransform: 'none' }}
+                        onClick={() => copyInviteLink(inv.token)}
+                      >
+                        Copy Join Link
+                      </button>
+                    )}
+                  </div>
                   <span className={`badge ${
                     inv.status === 'accepted' ? 'badge-accent' : 
                     inv.status === 'expired' ? 'badge-danger' : 'badge-warning'

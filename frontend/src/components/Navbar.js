@@ -13,7 +13,7 @@ export default function Navbar() {
     <nav className={styles.navbar}>
       <div className={styles.inner}>
         <Link href={user ? '/dashboard' : '/'} className={styles.logo}>
-          <span className={styles.logoIcon}>✦</span>
+          <img src="/logo.jpg" alt="EnglishX Logo" className={styles.logoImage} />
           <span className={styles.logoText}>EnglishX</span>
         </Link>
 
