@@ -112,5 +112,11 @@ jobs:
           port: 22
           script: |
             set -e
-            cd ~/EnglishX
+            if [ ! -d "$HOME/EnglishX" ]; then
+              git clone https://github.com/yashraj-g/EnglishX.git "$HOME/EnglishX"
+            fi
+            cd "$HOME/EnglishX"
+            git fetch origin
+            git reset --hard origin/main
+            git clean -fd
             bash infra/deploy.sh
