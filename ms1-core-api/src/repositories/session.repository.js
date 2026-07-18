@@ -12,8 +12,27 @@ const sessionRepository = {
   },
 
   async findById(id) {
-    const result = await query('SELECT * FROM sessions WHERE id = $1', [id]);
+    const result = await query(
+      'SELECT *, COALESCE(audio_keys, \'[]\') AS audio_keys FROM sessions WHERE id = $1',
+      [id]
+    );
     return result.rows[0] || null;
+  },
+
+  /**
+   * Append a { turnIndex, s3Key } entry to the session's audio_keys JSONB array.
+   * Safe to call concurrently — uses jsonb_insert for atomic append.
+   */
+  async addAudioKey(sessionId, turnIndex, s3Key) {
+    const entry = JSON.stringify({ turnIndex, s3Key });
+    const result = await query(
+      `UPDATE sessions
+       SET audio_keys = COALESCE(audio_keys, '[]'::jsonb) || $2::jsonb
+       WHERE id = $1
+       RETURNING id, audio_keys`,
+      [sessionId, entry]
+    );
+    return result.rows[0];
   },
 
   async endSession(id, { durationSeconds, turnCount, transcript, audioUrl }) {

@@ -1,4 +1,5 @@
 """Speech routes for ms2."""
+import asyncio
 import io
 import logging
 from fastapi import APIRouter, HTTPException
@@ -7,6 +8,7 @@ from fastapi.responses import StreamingResponse
 from app.schemas.speech import TurnRequest, TurnResponse, AnalyzeRequest, TTSRequest
 from app.services.stt_service import stt_service
 from app.services.tts_service import tts_service
+from app.services.s3_service import s3_service
 from app.graphs.conversation_graph import conversation_graph, ConversationState
 from app.graphs.feedback_pipeline import feedback_pipeline, FeedbackState
 from app.graphs.placement_grader import grade_placement
@@ -17,7 +19,7 @@ router = APIRouter(prefix="/speech", tags=["speech"])
 
 @router.post("/turn", response_model=TurnResponse)
 async def process_turn(request: TurnRequest):
-    """Process a single conversation turn: STT → conversation graph → reply."""
+    """Process a single conversation turn: STT → S3 upload → conversation graph → reply."""
     try:
         # Step 1: Transcribe audio (or use text fallback)
         if request.audio_base64:
@@ -29,11 +31,25 @@ async def process_turn(request: TurnRequest):
 
         user_transcript = stt_result["transcript"]
         word_confidences = stt_result.get("words", [])
+        filler_words = stt_result.get("filler_words", [])
+        filler_count = stt_result.get("filler_count", 0)
+        language_confidence = stt_result.get("language_confidence", 1.0)
 
         if not user_transcript.strip():
             raise HTTPException(status_code=400, detail="No speech detected in audio")
 
-        # Step 2: Run conversation graph
+        # Step 2: Fire S3 upload concurrently (non-blocking — best effort)
+        # Only triggered when audio was provided (not text fallback)
+        audio_s3_key: str | None = None
+        if request.audio_base64:
+            audio_s3_key = await s3_service.upload_audio(
+                audio_base64=request.audio_base64,
+                session_id=request.session_id,
+                turn_index=request.turn_index,
+                user_id=request.user_id,
+            )
+
+        # Step 3: Run conversation graph
         state: ConversationState = {
             "mode": request.mode.value,
             "learner_level": request.learner_level,
@@ -41,6 +57,8 @@ async def process_turn(request: TurnRequest):
             "user_transcript": user_transcript,
             "ai_reply": "",
             "word_confidences": word_confidences,
+            "filler_words": filler_words,
+            "language_confidence": language_confidence,
         }
 
         result = conversation_graph.invoke(state)
@@ -49,6 +67,9 @@ async def process_turn(request: TurnRequest):
             user_transcript=user_transcript,
             ai_reply=result["ai_reply"],
             word_confidences=word_confidences,
+            filler_words=filler_words,
+            language_confidence=language_confidence,
+            audio_s3_key=audio_s3_key,
         )
 
     except HTTPException:
@@ -62,15 +83,31 @@ async def process_turn(request: TurnRequest):
 async def analyze_session(request: AnalyzeRequest):
     """Analyze a completed session transcript and return 3-dimension feedback."""
     try:
-        # Collect word confidences from all turns
+        # Collect word confidences and filler data from all turns
         all_word_confidences = []
+        all_filler_words = []
+        total_language_confidence_sum = 0.0
+        turn_count = 0
+
         for turn in request.transcript:
             if turn.get("word_confidences"):
                 all_word_confidences.extend(turn["word_confidences"])
+            if turn.get("filler_words"):
+                all_filler_words.extend(turn["filler_words"])
+            if turn.get("language_confidence") is not None:
+                total_language_confidence_sum += turn["language_confidence"]
+                turn_count += 1
+
+        avg_language_confidence = (
+            total_language_confidence_sum / turn_count if turn_count > 0 else 1.0
+        )
 
         state: FeedbackState = {
             "transcript": request.transcript,
             "word_confidences": all_word_confidences,
+            "filler_words": all_filler_words,
+            "filler_count": len(all_filler_words),
+            "language_confidence": avg_language_confidence,
             "learner_level": request.learner_level,
             "pronunciation_result": {},
             "vocabulary_result": {},

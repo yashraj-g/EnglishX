@@ -16,9 +16,18 @@ const config = {
     refreshExpiry: process.env.JWT_REFRESH_EXPIRY || '7d',
   },
 
-  email: {
-    resendApiKey: process.env.RESEND_API_KEY,
-    fromEmail: process.env.FROM_EMAIL || 'onboarding@resend.dev',
+  aws: {
+    region: process.env.AWS_REGION || 'ap-south-1',
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+    sesFromEmail: process.env.AWS_SES_FROM_EMAIL || 'noreply@yourdomain.com',
+    s3Bucket: process.env.AWS_S3_BUCKET || '',
+  },
+
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID || '',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    callbackUrl: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3001/api/auth/google/callback',
   },
 
   ms2: {
@@ -32,9 +41,9 @@ const config = {
   otel: {
     endpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
     serviceName: process.env.OTEL_SERVICE_NAME || 'ms1-core-api',
-    // Format: "Authorization=Basic <base64>" — set for Grafana Cloud
     headers: process.env.OTEL_EXPORTER_OTLP_HEADERS || '',
   },
 };
 
 module.exports = config;
+

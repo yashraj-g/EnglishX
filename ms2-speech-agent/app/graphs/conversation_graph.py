@@ -2,9 +2,13 @@
 
 Stateful conversation agent that adapts to the learner's level,
 supports free talk and HR interview modes.
+
+Filler-word awareness: when Deepgram detects many hesitations (um/uh),
+the system prompt encourages the AI to slow down and give the learner
+more breathing room, instead of peppering them with follow-up questions.
 """
 import logging
-from typing import Annotated, TypedDict
+from typing import TypedDict
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, END
@@ -22,6 +26,8 @@ class ConversationState(TypedDict):
     user_transcript: str
     ai_reply: str
     word_confidences: list[dict]
+    filler_words: list[str]
+    language_confidence: float
 
 
 SYSTEM_PROMPTS = {
@@ -36,7 +42,7 @@ Rules:
 - Use everyday topics: hobbies, work, travel, food, movies, family, goals
 - If they seem stuck, offer a simpler way to say what they might be trying to express
 - NEVER correct their grammar during conversation — save it for the feedback report
-- Respond naturally as a conversation partner, not as a teacher""",
+- Respond naturally as a conversation partner, not as a teacher{filler_hint}""",
 
     "hr_interview": """You are EnglishX acting as an HR interviewer conducting a practice job interview.
 The learner's English level is {level}/6 (where 1=beginner, 6=proficient).
@@ -50,7 +56,7 @@ Rules:
 - Adapt question complexity to their level
 - Be professional but warm — this is practice, not a real interview
 - Keep your responses SHORT (1-2 sentences + the next question)
-- NEVER correct their grammar during the interview""",
+- NEVER correct their grammar during the interview{filler_hint}""",
 
     "placement": """You are EnglishX conducting a brief English level placement assessment.
 Ask a mix of questions that test different complexity levels.
@@ -63,6 +69,11 @@ Rules:
 - Be warm and encouraging — this should feel like a friendly chat, not an exam
 - After 5-6 exchanges, say 'Thank you! That's all for the placement. Let me analyze your speaking level.'"""
 }
+
+# Added to system prompt when the learner is using many filler words
+_FILLER_HINT = """
+- The learner is using many hesitation sounds (um, uh). Give them extra time by keeping your 
+  response even shorter this turn — one sentence and one simple question. Do NOT pile on."""
 
 
 def get_llm():
@@ -85,11 +96,18 @@ def generate_reply(state: ConversationState) -> ConversationState:
     level = state.get("learner_level", 2)
     history = state.get("conversation_history", [])
     user_text = state.get("user_transcript", "")
+    filler_words = state.get("filler_words", [])
+    language_confidence = state.get("language_confidence", 1.0)
 
-    system_prompt = SYSTEM_PROMPTS.get(mode, SYSTEM_PROMPTS["free_talk"]).format(level=level)
+    # Determine if learner is struggling with fluency
+    filler_count = len(filler_words)
+    struggling_with_fluency = filler_count >= 3 or language_confidence < 0.70
+    filler_hint = _FILLER_HINT if struggling_with_fluency else ""
+
+    prompt_template = SYSTEM_PROMPTS.get(mode, SYSTEM_PROMPTS["free_talk"])
+    system_prompt = prompt_template.format(level=level, filler_hint=filler_hint) if "{filler_hint}" in prompt_template else prompt_template.format(level=level)
 
     if not llm:
-        # Mock response for development without API key
         mock_replies = [
             "That's really interesting! Can you tell me more about that?",
             "I see! What made you interested in that?",

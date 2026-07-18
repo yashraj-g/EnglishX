@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
-import { getLearnerDashboard } from '@/lib/api';
+import { getLearnerDashboard, getSessionAudio } from '@/lib/api';
+import AudioPlayer from '@/components/AudioPlayer';
 import styles from './dashboard.module.css';
 
 const LEVEL_NAMES = ['', 'Beginner', 'Elementary', 'Intermediate', 'Upper-Int', 'Advanced', 'Proficient'];
@@ -34,6 +35,24 @@ export default function DashboardPage() {
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorStatus, setErrorStatus] = useState(null);
+  // Audio playback: { [sessionId]: { loading, turns } }
+  const [sessionAudio, setSessionAudio] = useState({});
+
+  const toggleSessionAudio = useCallback(async (sessionId) => {
+    // Collapse if already open
+    if (sessionAudio[sessionId]?.turns) {
+      setSessionAudio(prev => ({ ...prev, [sessionId]: undefined }));
+      return;
+    }
+    setSessionAudio(prev => ({ ...prev, [sessionId]: { loading: true, turns: null } }));
+    try {
+      const data = await getSessionAudio(token, sessionId);
+      setSessionAudio(prev => ({ ...prev, [sessionId]: { loading: false, turns: data.turns || [] } }));
+    } catch (err) {
+      console.warn('Failed to load audio for session', sessionId, err);
+      setSessionAudio(prev => ({ ...prev, [sessionId]: { loading: false, turns: [] } }));
+    }
+  }, [token, sessionAudio]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -171,20 +190,61 @@ export default function DashboardPage() {
             <div className={styles.sessionList}>
               {recentSessions.slice(0, 5).map((session) => (
                 <div key={session.id} className={`card ${styles.sessionItem}`}>
-                  <div className={styles.sessionMode}>
-                    {session.mode === 'free_talk' ? '💬' : session.mode === 'hr_interview' ? '💼' : '📋'}
-                    <span>{session.mode.replace('_', ' ')}</span>
+                  <div className={styles.sessionTop}>
+                    <div className={styles.sessionMode}>
+                      {session.mode === 'free_talk' ? '💬' : session.mode === 'hr_interview' ? '💼' : '📋'}
+                      <span>{session.mode.replace('_', ' ')}</span>
+                    </div>
+                    <div className={styles.sessionMeta}>
+                      <span>{session.turn_count || 0} turns</span>
+                      <span>·</span>
+                      <span>{session.duration_seconds ? `${Math.round(session.duration_seconds / 60)}m` : '—'}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div className={styles.sessionDate}>
+                        {new Date(session.started_at).toLocaleDateString('en-GB', {
+                          day: 'numeric', month: 'short',
+                        })}
+                      </div>
+                      <button
+                        onClick={() => toggleSessionAudio(session.id)}
+                        style={{
+                          background: sessionAudio[session.id]?.turns ? 'rgba(99,102,241,0.25)' : 'rgba(255,255,255,0.07)',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          borderRadius: '8px',
+                          padding: '4px 10px',
+                          fontSize: '12px',
+                          color: 'rgba(255,255,255,0.75)',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          transition: 'background 0.2s',
+                        }}
+                        title="Play your recordings from this session"
+                      >
+                        {sessionAudio[session.id]?.loading ? '⏳' : '🎙 Recordings'}
+                      </button>
+                    </div>
                   </div>
-                  <div className={styles.sessionMeta}>
-                    <span>{session.turn_count || 0} turns</span>
-                    <span>·</span>
-                    <span>{session.duration_seconds ? `${Math.round(session.duration_seconds / 60)}m` : '—'}</span>
-                  </div>
-                  <div className={styles.sessionDate}>
-                    {new Date(session.started_at).toLocaleDateString('en-GB', {
-                      day: 'numeric', month: 'short',
-                    })}
-                  </div>
+
+                  {/* Audio playback panel */}
+                  {sessionAudio[session.id]?.turns && (
+                    <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {sessionAudio[session.id].turns.length === 0 ? (
+                        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', margin: 0 }}>
+                          No recordings found for this session.
+                        </p>
+                      ) : (
+                        sessionAudio[session.id].turns.map((turn) => (
+                          <AudioPlayer
+                            key={turn.turnIndex}
+                            presignedUrl={turn.presignedUrl}
+                            label={`Turn ${turn.turnIndex + 1}`}
+                            compact
+                          />
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

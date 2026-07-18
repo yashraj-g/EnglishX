@@ -61,3 +61,49 @@
   color: var(--primary-400);
   font-weight: 600;
 }
+
+.googleButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  margin-bottom: var(--space-4);
+}
+
+.googleButton:hover {
+  background: var(--bg-card-hover, var(--bg-card));
+  border-color: var(--primary-500);
+  transform: translateY(-1px);
+}
+
+.googleButton:active {
+  transform: translateY(0);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+

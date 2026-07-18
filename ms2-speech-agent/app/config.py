@@ -22,5 +22,11 @@ class Settings(BaseSettings):
     otel_exporter_otlp_headers: str = ""
     otel_service_name: str = "ms2-speech-agent"
 
+    # AWS S3 — audio recording storage
+    aws_s3_bucket: str = ""
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
+    aws_region: str = "ap-south-1"
+
 
 settings = Settings()

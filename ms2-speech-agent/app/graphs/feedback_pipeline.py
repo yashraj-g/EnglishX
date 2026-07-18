@@ -1,7 +1,10 @@
 """LangGraph Feedback Pipeline.
 
-Three-node parallel analysis: pronunciation, vocabulary, grammar.
+Three-node sequential analysis: pronunciation, vocabulary, grammar.
 Aggregates into a structured feedback report.
+
+Pronunciation node uses Deepgram's rich signal (filler words, language confidence,
+per-word confidence) combined with phoneme-level LLM reasoning for Hindi speakers.
 """
 import json
 import logging
@@ -20,6 +23,9 @@ class FeedbackState(TypedDict):
     """State for the feedback pipeline graph."""
     transcript: list[dict]
     word_confidences: list[dict]
+    filler_words: list[str]
+    filler_count: int
+    language_confidence: float
     learner_level: int
     pronunciation_result: dict
     vocabulary_result: dict
@@ -45,61 +51,126 @@ def _extract_user_text(transcript: list[dict]) -> str:
 
 
 def analyze_pronunciation(state: FeedbackState) -> FeedbackState:
-    """Analyze pronunciation using STT word confidences and LLM pattern detection."""
+    """Analyze pronunciation using Deepgram signals and LLM phoneme reasoning.
+
+    Uses three Deepgram-derived signals:
+    1. word_confidences  — per-word confidence scores (low = likely mispronounced)
+    2. filler_words      — detected hesitations (um, uh, etc.) from Deepgram filler_words=True
+    3. language_confidence — overall speech clarity (lower = heavier accent, harder to understand)
+    """
     llm = get_llm()
     user_text = _extract_user_text(state.get("transcript", []))
     word_confidences = state.get("word_confidences", [])
+    filler_words = state.get("filler_words", [])
+    filler_count = state.get("filler_count", 0)
+    language_confidence = state.get("language_confidence", 1.0)
 
     if not llm:
         state["pronunciation_result"] = {
             "mispronounced_words": [
-                {"word": "very", "said_as": "wery", "count": 2, "tip": "Practice the 'v' sound by placing your top teeth on your lower lip"},
+                {"word": "very", "likely_said": "wery", "phoneme_issue": "v→w substitution", "tip": "Place upper teeth on lower lip to make the 'v' sound"},
             ],
-            "problem_phonemes": ["v/w confusion", "th sounds"],
-            "pace_assessment": "Good pace overall, slight hesitation between sentences",
-            "filler_sounds": ["um", "uh"],
+            "phoneme_issues": [
+                {"phoneme_pair": "v/w", "example_word": "very", "correction": "Make the 'v' by touching upper teeth to lower lip"},
+                {"phoneme_pair": "th/d or th/t", "example_word": "think → tink", "correction": "Place tongue tip between teeth for 'th'"},
+            ],
+            "filler_analysis": {
+                "count": filler_count,
+                "words_detected": filler_words,
+                "assessment": "Moderate use of fillers. Practice pausing silently instead.",
+            },
+            "clarity_score": round(language_confidence * 100),
+            "pace_assessment": "Good pace overall",
             "score": 45,
         }
         return state
 
-    # Find low-confidence words from STT (threshold raised to 0.94 to capture subtle mistakes)
-    low_confidence_words = [w for w in word_confidences if w.get("confidence", 1.0) < 0.94]
+    # Low-confidence words are likely mispronounced (threshold raised to 0.94 to capture subtle mistakes)
+    # Only include content words (type == "word"), not fillers
+    low_confidence_words = [
+        w for w in word_confidences
+        if w.get("confidence", 1.0) < 0.94 and w.get("type", "word") == "word"
+    ]
 
-    prompt = f"""Analyze the pronunciation of this English learner (Level {state.get('learner_level', 2)}/6).
-The learner is a Hindi-native speaker.
+    # Accent clarity: language_confidence < 0.80 = heavy accent causing recognition issues
+    clarity_level = "clear" if language_confidence >= 0.85 else (
+        "moderately accented" if language_confidence >= 0.70 else "heavily accented"
+    )
 
-Their spoken text: "{user_text}"
+    prompt = f"""You are a precise English pronunciation coach specializing in Hindi-native English learners.
 
-Words with low STT confidence (likely mispronounced or forced-transcribed):
+Learner profile:
+- English level: {state.get('learner_level', 2)}/6 (1=beginner, 6=proficient)
+- Native language: Hindi
+- Speech clarity: {clarity_level} (Deepgram language confidence: {language_confidence:.2f}/1.0)
+
+The learner said: "{user_text}"
+
+Words Deepgram struggled to recognize (likely mispronounced or forced-transcribed):
 {json.dumps(low_confidence_words[:12], indent=2)}
 
-Respond in this EXACT JSON format:
+Filler words Deepgram detected (actual hesitations): {filler_words}
+Total filler count: {filler_count}
+
+Common Hindi-speaker phoneme issues to check for:
+- v/w confusion: "very" → "wery", "wine" → "vine"
+- th→d or th→t: "think" → "tink", "that" → "dat", "three" → "tree"
+- Retroflex consonants: strong t/d sounds instead of dental t/d
+- Aspirated stops: extra breath on p/t/k at word starts
+- r/l distinction: "rice"/"lice", "right"/"light"
+- Missing word-final consonants: "and" → "an", "last" → "las"
+- Vowel length: short vs. long vowels (bit/beat, pull/pool)
+
+Respond in this EXACT JSON format (no markdown, no explanation):
 {{
     "mispronounced_words": [
-        {{"word": "the correct word", "said_as": "how they likely said it phonetically or literally", "count": 1, "tip": "how to fix it"}}
+        {{
+            "word": "the correct target word",
+            "likely_said": "how the learner likely pronounced it",
+            "phoneme_issue": "specific phoneme substitution e.g. th→d",
+            "tip": "one clear actionable tip to fix it"
+        }}
     ],
-    "problem_phonemes": ["list common Hindi-speaker sound issues detected, e.g. v/w, th, r/l, retroflex consonants"],
-    "pace_assessment": "brief assessment of speaking pace",
-    "filler_sounds": ["any filler sounds detected"],
-    "score": 45
+    "phoneme_issues": [
+        {{
+            "phoneme_pair": "v/w or th/d etc.",
+            "example_word": "word showing the problem",
+            "correction": "mouth position / technique to fix it"
+        }}
+    ],
+    "filler_analysis": {{
+        "count": {filler_count},
+        "words_detected": {json.dumps(filler_words)},
+        "assessment": "brief assessment of filler usage pattern and advice"
+    }},
+    "clarity_score": {round(language_confidence * 100)},
+    "pace_assessment": "brief note on speaking pace based on word timings",
+    "score": 50
 }}
 
-Score 0-100 where: 0-16=very poor, 17-33=poor, 34-50=fair, 51-67=good, 68-84=very good, 85-100=excellent.
-Be extremely specific about exactly which words were mispronounced and how.
-Note: If a word has low confidence (like 'bought'), check if they might have made a grammar mistake like 'buyed' or said a phonetically skewed word like 'camputerr' instead of 'computer'.
-Return ONLY valid JSON, no markdown."""
+Score 0-100: 0-16=very poor, 17-33=poor, 34-50=fair, 51-67=good, 68-84=very good, 85-100=excellent.
+Consider: word clarity, phoneme accuracy, filler frequency, language_confidence score.
+Be specific — name the exact words mispronounced and the exact phoneme substitution.
+Note: If a word has low confidence (like 'bought'), check if they might have made a grammar mistake like 'buyed' or said a phonetically skewed word like 'camputerr' instead of 'computer'."""
 
     try:
         response = llm.invoke(prompt)
-        result = json.loads(response.content.strip().strip("```json").strip("```"))
+        content = response.content.strip()
+        # Strip markdown code fences if present
+        if content.startswith("```"):
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+        result = json.loads(content.strip())
         state["pronunciation_result"] = result
     except Exception as e:
         logger.error(f"Pronunciation analysis failed: {e}")
         state["pronunciation_result"] = {
             "mispronounced_words": [],
-            "problem_phonemes": [],
+            "phoneme_issues": [],
+            "filler_analysis": {"count": filler_count, "words_detected": filler_words, "assessment": "Unable to analyze"},
+            "clarity_score": round(language_confidence * 100),
             "pace_assessment": "Unable to analyze",
-            "filler_sounds": [],
             "score": 50,
         }
 
@@ -148,7 +219,12 @@ Return ONLY valid JSON, no markdown."""
 
     try:
         response = llm.invoke(prompt)
-        result = json.loads(response.content.strip().strip("```json").strip("```"))
+        content = response.content.strip()
+        if content.startswith("```"):
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+        result = json.loads(content.strip())
         state["vocabulary_result"] = result
     except Exception as e:
         logger.error(f"Vocabulary analysis failed: {e}")
@@ -209,7 +285,12 @@ Return ONLY valid JSON, no markdown."""
 
     try:
         response = llm.invoke(prompt)
-        result = json.loads(response.content.strip().strip("```json").strip("```"))
+        content = response.content.strip()
+        if content.startswith("```"):
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+        result = json.loads(content.strip())
         state["grammar_result"] = result
     except Exception as e:
         logger.error(f"Grammar analysis failed: {e}")
@@ -281,16 +362,15 @@ def aggregate_feedback(state: FeedbackState) -> FeedbackState:
 
 
 def build_feedback_pipeline():
-    """Build the LangGraph feedback pipeline with parallel analysis nodes."""
+    """Build the LangGraph feedback pipeline."""
     graph = StateGraph(FeedbackState)
 
-    # Three parallel analysis nodes
+    # Three sequential analysis nodes → aggregator
     graph.add_node("analyze_pronunciation", analyze_pronunciation)
     graph.add_node("analyze_vocabulary", analyze_vocabulary)
     graph.add_node("analyze_grammar", analyze_grammar)
     graph.add_node("aggregate", aggregate_feedback)
 
-    # Fan-out: all three run from the entry point
     graph.set_entry_point("analyze_pronunciation")
     graph.add_edge("analyze_pronunciation", "analyze_vocabulary")
     graph.add_edge("analyze_vocabulary", "analyze_grammar")

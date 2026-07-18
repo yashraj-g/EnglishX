@@ -1,11 +1,17 @@
-const { Resend } = require('resend');
+const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
 const config = require('../config');
 
-let resend;
+let sesClient;
 try {
-  resend = new Resend(config.email.resendApiKey);
+  sesClient = new SESClient({
+    region: config.aws.region,
+    credentials: {
+      accessKeyId: config.aws.accessKeyId,
+      secretAccessKey: config.aws.secretAccessKey,
+    },
+  });
 } catch {
-  console.warn('Resend not configured — emails will be logged to console');
+  console.warn('AWS SES not configured — emails will be logged to console');
 }
 
 const emailService = {
@@ -20,15 +26,15 @@ const emailService = {
         <div style="background: #f8fafc; border-radius: 12px; padding: 32px; margin-bottom: 24px;">
           <h2 style="color: #1e293b; font-size: 20px; margin-top: 0;">You've been invited!</h2>
           <p style="color: #475569; line-height: 1.6;">
-            You've been invited to join <strong>${batchName}</strong> on EnglishX — 
-            a voice-first AI English speaking coach that helps you practise speaking, 
-            get specific feedback on your pronunciation, vocabulary, and grammar, 
+            You've been invited to join <strong>${batchName}</strong> on EnglishX —
+            a voice-first AI English speaking coach that helps you practise speaking,
+            get specific feedback on your pronunciation, vocabulary, and grammar,
             and track your progress over time.
           </p>
-          <a href="${inviteLink}" 
-             style="display: inline-block; background: #6366f1; color: white; padding: 14px 32px; 
+          <a href="${inviteLink}"
+             style="display: inline-block; background: #6366f1; color: white; padding: 14px 32px;
                     border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 16px;">
-            Accept Invite & Sign Up
+            Accept Invite &amp; Sign Up
           </a>
           <p style="color: #94a3b8; font-size: 12px; margin-top: 16px;">
             This invite expires in 7 days. If you didn't expect this email, you can safely ignore it.
@@ -50,11 +56,11 @@ const emailService = {
         <div style="background: #f8fafc; border-radius: 12px; padding: 32px;">
           <h2 style="color: #1e293b; font-size: 20px; margin-top: 0;">Hi ${name}!</h2>
           <p style="color: #475569; line-height: 1.6;">
-            You haven't practised today yet. Just 10 minutes of speaking practice 
+            You haven't practised today yet. Just 10 minutes of speaking practice
             can make a real difference. Your AI partner is ready and waiting!
           </p>
-          <a href="${config.frontend.url}/dashboard" 
-             style="display: inline-block; background: #6366f1; color: white; padding: 14px 32px; 
+          <a href="${config.frontend.url}/dashboard"
+             style="display: inline-block; background: #6366f1; color: white; padding: 14px 32px;
                     border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 16px;">
             Start Practising
           </a>
@@ -66,22 +72,28 @@ const emailService = {
   },
 
   async _send({ to, subject, html }) {
-    if (!resend || config.email.resendApiKey === 're_xxxxxxxxxxxx') {
+    const fromEmail = config.aws.sesFromEmail;
+    const isMocked = !sesClient || !config.aws.accessKeyId || config.aws.accessKeyId === 'your-access-key-id';
+
+    if (isMocked) {
       console.log(`[EMAIL MOCK] To: ${to} | Subject: ${subject}`);
-      console.log(`[EMAIL MOCK] Would send HTML email`);
-      return { id: 'mock-email-id', status: 'mocked' };
+      return { messageId: 'mock-email-id', status: 'mocked' };
     }
 
+    const command = new SendEmailCommand({
+      Source: fromEmail,
+      Destination: { ToAddresses: [to] },
+      Message: {
+        Subject: { Data: subject, Charset: 'UTF-8' },
+        Body: { Html: { Data: html, Charset: 'UTF-8' } },
+      },
+    });
+
     try {
-      const result = await resend.emails.send({
-        from: config.email.fromEmail,
-        to,
-        subject,
-        html,
-      });
-      return result;
+      const result = await sesClient.send(command);
+      return { messageId: result.MessageId, status: 'sent' };
     } catch (err) {
-      console.error('Failed to send email:', err);
+      console.error('AWS SES send failed:', err.message);
       throw new Error('Email delivery failed');
     }
   },
