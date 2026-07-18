@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
-import { startSession, endSession, processTurn, analyzeSession, saveSessionFeedback } from '@/lib/api';
+import { startSession, endSession, processTurn, analyzeSession, saveSessionFeedback, registerAudioKey } from '@/lib/api';
 import styles from './practice.module.css';
 
 const MODES = [
@@ -30,6 +30,7 @@ export default function PracticePage() {
   const [sessionStart, setSessionStart] = useState(null);
   const [wordConfidences, setWordConfidences] = useState([]);
   const chatEndRef = useRef(null);
+  const turnCountRef = useRef(0); // Track turn index for S3 key namespacing
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login');
@@ -90,7 +91,17 @@ export default function PracticePage() {
           role: m.role === 'ai' ? 'ai' : 'user',
           content: m.content,
         })),
+        userId: user?.id,
+        turnIndex: turnCountRef.current,
       });
+
+      // Register the S3 audio key with ms1 (best-effort, non-blocking)
+      if (result.audio_s3_key) {
+        registerAudioKey(token, sessionId, turnCountRef.current, result.audio_s3_key).catch(
+          (err) => console.warn('Failed to register audio key:', err)
+        );
+      }
+      turnCountRef.current += 1;
 
       if (result.word_confidences) {
         setWordConfidences(prev => [...prev, ...result.word_confidences]);
@@ -126,7 +137,10 @@ export default function PracticePage() {
           role: m.role === 'ai' ? 'ai' : 'user',
           content: m.content,
         })),
+        userId: user?.id,
+        turnIndex: turnCountRef.current,
       });
+      turnCountRef.current += 1;
 
       setMessages(prev => [
         ...prev,

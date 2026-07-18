@@ -140,7 +140,7 @@ export async function getLevelTrend(token, dimension) {
 }
 
 // ─── Speech (ms2) ────────────────────────
-export async function processTurn({ sessionId, audioBase64, textInput, mode, learnerLevel, conversationHistory }) {
+export async function processTurn({ sessionId, audioBase64, textInput, mode, learnerLevel, conversationHistory, userId, turnIndex }) {
   return request(`${SPEECH_BASE}/turn`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -151,6 +151,8 @@ export async function processTurn({ sessionId, audioBase64, textInput, mode, lea
       mode,
       learner_level: learnerLevel,
       conversation_history: conversationHistory,
+      user_id: userId || null,
+      turn_index: turnIndex || 0,
     }),
   });
 }
@@ -165,5 +167,28 @@ export async function analyzeSession({ sessionId, transcript, mode, learnerLevel
       mode,
       learner_level: learnerLevel,
     }),
+  });
+}
+
+// ─── Audio Playback ───────────────────────
+/**
+ * Fetch presigned S3 URLs for all recorded turns in a session.
+ * Returns { sessionId, turns: [{ turnIndex, s3Key, presignedUrl }] }
+ */
+export async function getSessionAudio(token, sessionId) {
+  return request(`${API_BASE}/sessions/${sessionId}/audio`, {
+    headers: getHeaders(token),
+  });
+}
+
+/**
+ * Register an S3 audio key for a turn in ms1.
+ * Called after processTurn returns an audio_s3_key.
+ */
+export async function registerAudioKey(token, sessionId, turnIndex, s3Key) {
+  return request(`${API_BASE}/sessions/${sessionId}/audio-key`, {
+    method: 'POST',
+    headers: getHeaders(token),
+    body: JSON.stringify({ turnIndex, s3Key }),
   });
 }

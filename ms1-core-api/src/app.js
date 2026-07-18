@@ -15,6 +15,7 @@ const inviteRoutes = require('./routes/invite.routes');
 const batchRoutes = require('./routes/batch.routes');
 const sessionRoutes = require('./routes/session.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const audioRoutes = require('./routes/audio.routes');
 const { router: googleAuthRoutes, passport } = require('./routes/google-auth.routes');
 
 const app = express();
@@ -62,6 +63,7 @@ app.use('/api/auth', googleAuthRoutes);
 app.use('/api/invites', apiLimiter, inviteRoutes);
 app.use('/api/batches', apiLimiter, batchRoutes);
 app.use('/api/sessions', apiLimiter, sessionRoutes);
+app.use('/api/sessions', apiLimiter, audioRoutes);
 app.use('/api/dashboard', apiLimiter, dashboardRoutes);
 
 app.use((err, req, res, next) => {

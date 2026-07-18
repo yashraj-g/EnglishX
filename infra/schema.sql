@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     turn_count INT DEFAULT 0,
     transcript JSONB DEFAULT '[]'::jsonb,
     audio_url VARCHAR(500),
+    audio_keys JSONB DEFAULT '[]'::jsonb,  -- Array of { turnIndex, s3Key } objects
     started_at TIMESTAMPTZ DEFAULT NOW(),
     ended_at TIMESTAMPTZ
 );

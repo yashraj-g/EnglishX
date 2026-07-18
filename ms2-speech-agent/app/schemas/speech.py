@@ -16,12 +16,20 @@ class TurnRequest(BaseModel):
     mode: SessionMode = SessionMode.FREE_TALK
     learner_level: int = Field(default=2, ge=1, le=6)
     conversation_history: list[dict] = Field(default_factory=list)
+    # Audio storage — used to namespace S3 keys per user
+    user_id: Optional[str] = None
+    turn_index: int = Field(default=0, ge=0)
 
 
 class TurnResponse(BaseModel):
     user_transcript: str
     ai_reply: str
     word_confidences: list[dict] = Field(default_factory=list)
+    # Pronunciation quality signals from Deepgram
+    filler_words: list[str] = Field(default_factory=list)
+    language_confidence: float = Field(default=1.0)
+    # S3 key for the uploaded audio (None if storage not configured)
+    audio_s3_key: Optional[str] = None
 
 
 class AnalyzeRequest(BaseModel):
