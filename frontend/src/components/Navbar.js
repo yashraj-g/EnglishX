@@ -26,6 +26,12 @@ export default function Navbar() {
               >
                 Dashboard
               </Link>
+              <Link
+                href="/progress"
+                className={`${styles.link} ${pathname === '/progress' ? styles.active : ''}`}
+              >
+                Progress
+              </Link>
               {user.role === 'admin' && (
                 <Link
                   href="/admin"

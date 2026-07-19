@@ -1,0 +1,548 @@
+.page {
+  padding: var(--space-8) 0;
+  min-height: calc(100vh - 70px);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  animation: fadeIn 0.4s ease-out;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-8);
+  gap: var(--space-4);
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: var(--gradient-hero);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: var(--space-1);
+}
+
+.competencyGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.competencyCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  cursor: pointer;
+  transition: all var(--transition-default);
+  position: relative;
+  overflow: hidden;
+}
+
+.competencyCard:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--primary-500);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+.activeCard {
+  border-color: var(--primary-500);
+  background: rgba(245, 158, 11, 0.04);
+  box-shadow: var(--shadow-glow);
+}
+
+.compLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-3);
+}
+
+.levelRingSection {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.badge {
+  font-size: 1rem;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  line-height: 1;
+}
+
+.levelName {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.cardIndicator {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Graph Card Styling */
+.graphCard {
+  margin-bottom: var(--space-8);
+  padding: var(--space-6);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.01) 0%, rgba(0, 0, 0, 0.4) 100%);
+  border: 1px solid var(--border-default);
+}
+
+.graphHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.graphHeader h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+
+.tabList {
+  display: flex;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.tabBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.tabBtn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.activeTabBtn {
+  background: var(--primary-500) !important;
+  color: #000 !important;
+  font-weight: 600;
+}
+
+.graphContainer {
+  position: relative;
+  width: 100%;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.graphPlaceholder {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.svgWrapper {
+  width: 100%;
+}
+
+.chartSvg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.chartDot {
+  transition: r 0.15s ease;
+  cursor: pointer;
+}
+
+.dotGroup:hover .chartDot {
+  r: 8px;
+}
+
+.tooltip {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.dotGroup:hover .tooltip {
+  opacity: 1;
+}
+
+/* History Section */
+.historySection {
+  margin-top: var(--space-8);
+}
+
+.sectionTitle {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin-bottom: var(--space-5);
+  letter-spacing: -0.02em;
+}
+
+.sessionTimeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.sessionCardItem {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all var(--transition-default);
+}
+
+.sessionCardItem:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.expandedCardItem {
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  background: rgba(12, 12, 14, 0.95);
+}
+
+.sessionOverview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-5) var(--space-6);
+  cursor: pointer;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  user-select: none;
+}
+
+.sessionLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.modeIcon {
+  font-size: 1.5rem;
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-default);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modeName {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin: 0 0 2px 0;
+}
+
+.sessionDate {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.sessionOverviewScores {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.compactScore {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  min-width: 60px;
+}
+
+.overallScoreBox {
+  background: rgba(245, 158, 11, 0.05);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.scoreLabel {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.scoreVal {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.expandButton {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.sessionCardItem:hover .expandButton {
+  color: var(--primary-500);
+}
+
+/* Expanded Content */
+.expandedContent {
+  padding: var(--space-6);
+  border-top: 1px solid var(--border-default);
+  background: rgba(0, 0, 0, 0.2);
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.loader {
+  text-align: center;
+  padding: var(--space-8) 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.detailError {
+  text-align: center;
+  padding: var(--space-6) 0;
+  color: var(--danger-500);
+  font-size: 0.9rem;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: 1.1fr 1.9fr;
+  gap: var(--space-6);
+}
+
+@media (max-width: 900px) {
+  .detailsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.feedbackPane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.encouragementBlock {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-default);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+}
+
+.encouragementBlock h5,
+.strengthsBlock h5,
+.dimensionDetails h5,
+.transcriptPane h5 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-2);
+}
+
+.encouragementBlock p {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.strengthsBlock ul {
+  padding-left: 20px;
+  margin: 0;
+}
+
+.strengthsBlock li {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: var(--space-1);
+}
+
+.dimensionDetails {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.dimDetailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dimDetailName {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary-500);
+}
+
+.dimDetailItem p {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Transcript Pane */
+.transcriptPane {
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  max-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.transcriptList {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.turnBlock {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.turnUserHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.turnLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.playerWrapper {
+  width: 220px;
+}
+
+.noAudioBadge {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.turnText {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-3) 0;
+  line-height: 1.4;
+}
+
+.aiReplyBlock {
+  border-top: 1px dashed var(--border-subtle);
+  padding-top: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.aiReplyLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary-500);
+  text-transform: uppercase;
+}
+
+.aiReplyText {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  margin: 2px 0 0 0;
+}
+
+.emptyState {
+  text-align: center;
+  padding: var(--space-12) 0;
+  background: var(--bg-card);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-lg);
+}
+
+.emptyState p {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-4);
+}
+
+.loadingContainer {
+  padding: var(--space-12) 0;
+}
+
+.skeletonHeader {
+  height: 48px;
+  width: 300px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-8);
+}
+
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+}
+
+.skeletonCard {
+  height: 140px;
+  border-radius: var(--radius-lg);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

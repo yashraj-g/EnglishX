@@ -93,7 +93,7 @@ class STTService:
                 diarize=False,
                 utterances=True,
                 filler_words=True,        # Capture um/uh/hesitations as tokens
-                detect_language=True,     # Get language confidence score
+                detect_language=False,    # Forced English transcription
                 keyterm=_HINDI_SPEAKER_KEYTERMS,  # Boost phonetic confusion pairs
             )
 
