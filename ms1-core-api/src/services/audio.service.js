@@ -40,6 +40,8 @@ const audioService = {
       const command = new GetObjectCommand({
         Bucket: config.aws.s3Bucket,
         Key: s3Key,
+        ResponseContentType: 'audio/webm',
+        ResponseContentDisposition: 'inline',
       });
       const url = await getSignedUrl(client, command, { expiresIn: 3600 });
       return url;

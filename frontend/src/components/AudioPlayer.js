@@ -57,7 +57,7 @@ export default function AudioPlayer({ presignedUrl, label, compact = false }) {
   }, []);
 
   const togglePlay = useCallback(async () => {
-    if (!audioRef.current || hasError) return;
+    if (!audioRef.current) return;
     try {
       if (isPlaying) {
         audioRef.current.pause();
@@ -65,11 +65,12 @@ export default function AudioPlayer({ presignedUrl, label, compact = false }) {
       } else {
         await audioRef.current.play();
         setIsPlaying(true);
+        setHasError(false);
       }
-    } catch {
-      setHasError(true);
+    } catch (err) {
+      console.warn('Audio play error:', err);
     }
-  }, [isPlaying, hasError]);
+  }, [isPlaying]);
 
   const handleProgressClick = useCallback((e) => {
     if (!audioRef.current || duration === 0) return;
@@ -107,7 +108,6 @@ export default function AudioPlayer({ presignedUrl, label, compact = false }) {
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
         onError={handleError}
-        crossOrigin="anonymous"
       />
 
       {/* Label */}

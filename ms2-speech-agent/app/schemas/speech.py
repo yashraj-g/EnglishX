@@ -30,6 +30,7 @@ class TurnResponse(BaseModel):
     language_confidence: float = Field(default=1.0)
     # S3 key for the uploaded audio (None if storage not configured)
     audio_s3_key: Optional[str] = None
+    agent_audio_s3_key: Optional[str] = None
 
 
 class AnalyzeRequest(BaseModel):

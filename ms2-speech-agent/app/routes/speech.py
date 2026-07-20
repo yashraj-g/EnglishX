@@ -62,14 +62,34 @@ async def process_turn(request: TurnRequest):
         }
 
         result = conversation_graph.invoke(state)
+        ai_reply = result["ai_reply"]
+
+        # Step 4: Synthesize & upload Agent audio reply to S3 (non-blocking best-effort)
+        agent_audio_s3_key: str | None = None
+        if ai_reply and ai_reply.strip():
+            try:
+                ai_audio_bytes = await tts_service.synthesize(ai_reply)
+                if ai_audio_bytes:
+                    agent_audio_s3_key = await s3_service.upload_bytes(
+                        audio_bytes=ai_audio_bytes,
+                        session_id=request.session_id,
+                        turn_index=request.turn_index,
+                        user_id=request.user_id,
+                        role="agent",
+                        ext="mp3",
+                        content_type="audio/mpeg",
+                    )
+            except Exception as e:
+                logger.warn("Failed to synthesize/upload agent audio: %s", e)
 
         return TurnResponse(
             user_transcript=user_transcript,
-            ai_reply=result["ai_reply"],
+            ai_reply=ai_reply,
             word_confidences=word_confidences,
             filler_words=filler_words,
             language_confidence=language_confidence,
             audio_s3_key=audio_s3_key,
+            agent_audio_s3_key=agent_audio_s3_key,
         )
 
     except HTTPException:

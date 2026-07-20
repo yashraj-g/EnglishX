@@ -433,35 +433,36 @@ export default function ProgressPage() {
                               <h5>🎙 Transcript & Audio Playback</h5>
                               <div className={styles.transcriptList}>
                                 {session.transcript && Array.isArray(session.transcript) && session.transcript.length > 0 ? (
-                                  session.transcript
-                                    .filter(turn => turn.role === 'user')
-                                    .map((turn, index) => {
-                                      // Find corresponding audio presignedUrl in lazy-loaded audio state
-                                      const audioTurn = (details.audio || []).find(a => a.turnIndex === index);
-                                      return (
-                                        <div key={index} className={styles.turnBlock}>
-                                          <div className={styles.turnUserHeader}>
-                                            <span className={styles.turnLabel}>Turn {index + 1}</span>
-                                            {audioTurn && audioTurn.presignedUrl ? (
-                                              <div className={styles.playerWrapper}>
-                                                <AudioPlayer presignedUrl={audioTurn.presignedUrl} compact />
-                                              </div>
-                                            ) : (
-                                              <span className={styles.noAudioBadge}>No recording</span>
-                                            )}
-                                          </div>
-                                          <p className={styles.turnText}>&quot;{turn.content}&quot;</p>
-                                          
-                                          {/* AI response matching this turn */}
-                                          {session.transcript[index * 2 + 1] && (
-                                            <div className={styles.aiReplyBlock}>
-                                              <span className={styles.aiReplyLabel}>AI Coach</span>
-                                              <p className={styles.aiReplyText}>{session.transcript[index * 2 + 1].content}</p>
+                                  session.transcript.map((turn, i) => {
+                                    if (turn.role !== 'user') return null;
+                                    const turnIndex = Math.floor(i / 2);
+                                    const audioTurn = (details.audio || []).find(a => a.turnIndex === turnIndex);
+                                    const aiResponse = session.transcript[i + 1];
+
+                                    return (
+                                      <div key={i} className={styles.turnBlock}>
+                                        <div className={styles.turnUserHeader}>
+                                          <span className={styles.turnLabel}>Turn {turnIndex + 1}</span>
+                                          {audioTurn && audioTurn.presignedUrl ? (
+                                            <div className={styles.playerWrapper}>
+                                              <AudioPlayer presignedUrl={audioTurn.presignedUrl} compact />
                                             </div>
+                                          ) : (
+                                            <span className={styles.noAudioBadge}>No recording</span>
                                           )}
                                         </div>
-                                      );
-                                    })
+                                        <p className={styles.turnText}>&quot;{turn.content}&quot;</p>
+                                        
+                                        {/* AI response matching this turn */}
+                                        {aiResponse && aiResponse.role === 'ai' && (
+                                          <div className={styles.aiReplyBlock}>
+                                            <span className={styles.aiReplyLabel}>AI Coach</span>
+                                            <p className={styles.aiReplyText}>{aiResponse.content}</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })
                                 ) : (
                                   <p className="text-secondary">No transcripts recorded for this session.</p>
                                 )}

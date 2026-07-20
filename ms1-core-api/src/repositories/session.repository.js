@@ -23,8 +23,8 @@ const sessionRepository = {
    * Append a { turnIndex, s3Key } entry to the session's audio_keys JSONB array.
    * Safe to call concurrently — uses jsonb_insert for atomic append.
    */
-  async addAudioKey(sessionId, turnIndex, s3Key) {
-    const entry = JSON.stringify({ turnIndex, s3Key });
+  async addAudioKey(sessionId, turnIndex, s3Key, role = 'user') {
+    const entry = JSON.stringify({ turnIndex, s3Key, role });
     const result = await query(
       `UPDATE sessions
        SET audio_keys = COALESCE(audio_keys, '[]'::jsonb) || $2::jsonb
