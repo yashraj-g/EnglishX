@@ -34,6 +34,15 @@ const endSessionSchema = z.object({
   sessionId: z.string().uuid(),
 });
 
+const sendOtpSchema = z.object({
+  email: z.string().email(),
+});
+
+const verifyOtpSchema = z.object({
+  email: z.string().email(),
+  otp: z.string().length(6).regex(/^\d{6}$/, 'OTP must be 6 digits'),
+});
+
 module.exports = {
   signupSchema,
   loginSchema,
@@ -42,4 +51,6 @@ module.exports = {
   batchSchema,
   startSessionSchema,
   endSessionSchema,
+  sendOtpSchema,
+  verifyOtpSchema,
 };

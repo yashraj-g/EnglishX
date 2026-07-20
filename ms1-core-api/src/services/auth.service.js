@@ -6,6 +6,8 @@ const config = require('../config');
 const userRepository = require('../repositories/user.repository');
 const inviteRepository = require('../repositories/invite.repository');
 const levelRepository = require('../repositories/level.repository');
+const otpRepository = require('../repositories/otp.repository');
+const emailService = require('./email.service');
 
 const SALT_ROUNDS = 12;
 
@@ -43,6 +45,7 @@ const authService = {
 
     let batchId = null;
     let role = 'admin'; // default signup is admin; learners come through invites
+    let emailVerified = false;
 
     if (inviteToken) {
       const invite = await inviteRepository.findByToken(inviteToken);
@@ -62,6 +65,7 @@ const authService = {
 
       batchId = invite.batch_id;
       role = 'learner';
+      emailVerified = true; // invite email is already verified by the admin
       await inviteRepository.markAccepted(invite.id);
     }
 
@@ -75,7 +79,89 @@ const authService = {
       name,
       role,
       batchId,
+      emailVerified,
     });
+
+    // Admin accounts require email verification via OTP before receiving tokens.
+    // Learner accounts (invite-based) skip OTP — the invite itself verifies email ownership.
+    if (role === 'admin') {
+      await this.sendOtp({ email });
+      return {
+        requiresVerification: true,
+        email,
+        message: 'A 6-digit verification code has been sent to your email.',
+      };
+    }
+
+    const accessToken = this.generateAccessToken(user);
+    const refreshToken = this.generateRefreshToken();
+
+    const refreshTokenHash = crypto
+      .createHash('sha256')
+      .update(refreshToken)
+      .digest('hex');
+
+    const refreshExpiry = new Date();
+    refreshExpiry.setDate(refreshExpiry.getDate() + 7);
+
+    await levelRepository.saveRefreshToken({
+      id: uuidv4(),
+      userId: user.id,
+      tokenHash: refreshTokenHash,
+      expiresAt: refreshExpiry,
+    });
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        batchId: user.batch_id,
+      },
+      accessToken,
+      refreshToken,
+    };
+  },
+
+  async sendOtp({ email }) {
+    // Invalidate any previous unused OTPs for this email
+    await otpRepository.invalidateAll(email);
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 10);
+
+    await otpRepository.create({
+      id: uuidv4(),
+      email,
+      otpHash,
+      expiresAt,
+    });
+
+    await emailService.sendOtpEmail({ to: email, otp });
+  },
+
+  async verifyOtp({ email, otp }) {
+    const record = await otpRepository.findValid(email);
+    if (!record) {
+      throw new Error('OTP is invalid or has expired');
+    }
+
+    const submittedHash = crypto.createHash('sha256').update(otp).digest('hex');
+    if (submittedHash !== record.otp_hash) {
+      throw new Error('Incorrect OTP');
+    }
+
+    await otpRepository.markUsed(record.id);
+
+    // Mark the user as verified and issue tokens
+    const user = await userRepository.findByEmail(email);
+    if (!user) throw new Error('User not found');
+
+    await userRepository.markEmailVerified(user.id);
 
     const accessToken = this.generateAccessToken(user);
     const refreshToken = this.generateRefreshToken();

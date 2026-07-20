@@ -1,12 +1,12 @@
 const { query } = require('../config/database');
 
 const userRepository = {
-  async create({ id, email, passwordHash, name, role, batchId }) {
+  async create({ id, email, passwordHash, name, role, batchId, emailVerified = false }) {
     const result = await query(
-      `INSERT INTO users (id, email, password_hash, name, role, batch_id)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO users (id, email, password_hash, name, role, batch_id, email_verified)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, email, name, role, batch_id, pronunciation_level, vocabulary_level, grammar_level, overall_level, created_at`,
-      [id, email, passwordHash, name, role, batchId || null]
+      [id, email, passwordHash, name, role, batchId || null, emailVerified]
     );
     return result.rows[0];
   },
@@ -35,6 +35,13 @@ const userRepository = {
   async updateLastPracticed(userId) {
     await query(
       'UPDATE users SET last_practiced_at = NOW(), updated_at = NOW() WHERE id = $1',
+      [userId]
+    );
+  },
+
+  async markEmailVerified(userId) {
+    await query(
+      'UPDATE users SET email_verified = true, updated_at = NOW() WHERE id = $1',
       [userId]
     );
   },

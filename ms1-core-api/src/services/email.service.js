@@ -71,6 +71,35 @@ const emailService = {
     return this._send({ to, subject, html });
   },
 
+  async sendOtpEmail({ to, otp }) {
+    const subject = 'Your EnglishX verification code';
+    const html = `
+      <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <div style="text-align: center; margin-bottom: 32px;">
+          <h1 style="color: #6366f1; font-size: 28px; margin: 0;">EnglishX</h1>
+          <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Your AI English Speaking Coach</p>
+        </div>
+        <div style="background: #f8fafc; border-radius: 12px; padding: 32px; margin-bottom: 24px;">
+          <h2 style="color: #1e293b; font-size: 20px; margin-top: 0;">Verify your email</h2>
+          <p style="color: #475569; line-height: 1.6;">
+            Use the code below to verify your account. It expires in <strong>10 minutes</strong>.
+          </p>
+          <div style="text-align: center; margin: 32px 0;">
+            <span style="display: inline-block; background: #6366f1; color: white;
+                         font-size: 36px; font-weight: 700; letter-spacing: 10px;
+                         padding: 16px 32px; border-radius: 12px; font-family: monospace;">
+              ${otp}
+            </span>
+          </div>
+          <p style="color: #94a3b8; font-size: 12px; text-align: center; margin: 0;">
+            If you didn't create an EnglishX account, you can safely ignore this email.
+          </p>
+        </div>
+      </div>
+    `;
+    return this._send({ to, subject, html });
+  },
+
   async _send({ to, subject, html }) {
     const fromEmail = config.aws.sesFromEmail;
     const isMocked = !sesClient || !config.aws.accessKeyId || config.aws.accessKeyId === 'your-access-key-id';

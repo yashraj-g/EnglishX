@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(100) NOT NULL,
     role VARCHAR(20) NOT NULL CHECK (role IN ('learner', 'admin')),
     batch_id UUID,
+    email_verified BOOLEAN DEFAULT false,
     pronunciation_level INT DEFAULT 1 CHECK (pronunciation_level BETWEEN 1 AND 6),
     vocabulary_level INT DEFAULT 1 CHECK (vocabulary_level BETWEEN 1 AND 6),
     grammar_level INT DEFAULT 1 CHECK (grammar_level BETWEEN 1 AND 6),
@@ -105,6 +106,16 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Email OTPs table: 6-digit verification codes for admin signup
+CREATE TABLE IF NOT EXISTS email_otps (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email VARCHAR(255) NOT NULL,
+    otp_hash VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    used BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_batch_id ON users(batch_id);
@@ -118,3 +129,5 @@ CREATE INDEX IF NOT EXISTS idx_level_history_user_dimension ON level_history(use
 CREATE INDEX IF NOT EXISTS idx_level_history_recorded_at ON level_history(recorded_at DESC);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_hash ON refresh_tokens(token_hash);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_email_otps_email ON email_otps(email);
+CREATE INDEX IF NOT EXISTS idx_email_otps_expires ON email_otps(expires_at);

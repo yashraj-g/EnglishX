@@ -1,21 +1,14 @@
 {
   "name": "englishx",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "cd frontend && npm install && npm run build",
+    "start": "cd frontend && npm run start"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/yashraj-g/EnglishX.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/yashraj-g/EnglishX/issues"
-  },
-  "homepage": "https://github.com/yashraj-g/EnglishX#readme"
+  }
 }
+

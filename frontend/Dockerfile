@@ -11,6 +11,7 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+ENV BUILD_STANDALONE=true
 RUN npm run build
 
 # Production image

@@ -49,6 +49,23 @@ export async function getProfile(token) {
   });
 }
 
+export async function sendOtp({ email }) {
+  return request(`${API_BASE}/auth/send-otp`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function verifyOtp({ email, otp }) {
+  return request(`${API_BASE}/auth/verify-otp`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ email, otp }),
+  });
+}
+
+
 // ─── Batches ─────────────────────────────
 export async function createBatch(token, { name, description }) {
   return request(`${API_BASE}/batches`, {

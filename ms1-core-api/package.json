@@ -6,7 +6,13 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "node --watch src/app.js",
-    "test": "echo \"Tests not configured yet\" && exit 0"
+    "test": "jest --forceExit --runInBand"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": ["**/tests/**/*.test.js"],
+    "testTimeout": 10000,
+    "verbose": true
   },
   "keywords": [],
   "author": "",
@@ -31,5 +37,9 @@
     "swagger-ui-express": "^5.0.1",
     "uuid": "^14.0.1",
     "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "supertest": "^7.2.2"
   }
 }
