@@ -194,4 +194,14 @@
   .skeletonGrid { grid-template-columns: repeat(2, 1fr); }
   .header { flex-direction: column; align-items: flex-start; gap: var(--space-4); }
   .feedbackScores { gap: var(--space-3); }
+  .sessionTop { flex-wrap: wrap; gap: var(--space-2); }
+  .sessionMode { min-width: unset; }
+}
+
+@media (max-width: 480px) {
+  .levelCards { grid-template-columns: 1fr; }
+  .skeletonGrid { grid-template-columns: 1fr; }
+  .feedbackItem { flex-direction: column; align-items: flex-start; gap: var(--space-3); }
+  .feedbackScores { flex-wrap: wrap; gap: var(--space-3); }
+  .fbDate { align-self: flex-end; }
 }

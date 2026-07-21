@@ -582,3 +582,111 @@
     transform: translateY(0);
   }
 }
+
+/* ─── Responsive: Tablet & Mobile ─── */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .title {
+    font-size: 1.75rem;
+  }
+
+  .competencyGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .graphCard {
+    padding: var(--space-4);
+  }
+
+  .graphHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .graphHeader h3 {
+    font-size: 1.2rem;
+  }
+
+  .tabList {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .tabBtn {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    text-align: center;
+  }
+
+  /* Session overview: stack left info + scores vertically */
+  .sessionOverview {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: var(--space-4);
+  }
+
+  .sessionOverviewScores {
+    width: 100%;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+
+  .compactScore {
+    flex: 1;
+    min-width: 52px;
+    padding: 6px 8px;
+  }
+
+  /* Expanded detail: already handled at 900px, reinforce */
+  .detailsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .transcriptPane {
+    max-height: 360px;
+  }
+
+  .playerWrapper {
+    width: 100%;
+  }
+
+  .sectionTitle {
+    font-size: 1.4rem;
+  }
+}
+
+/* ─── Responsive: Small phones ─── */
+@media (max-width: 480px) {
+  .competencyGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .sessionLeft {
+    gap: var(--space-2);
+  }
+
+  .modeIcon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
+
+  .scoreVal {
+    font-size: 0.9rem;
+  }
+
+  .scoreLabel {
+    font-size: 0.6rem;
+  }
+
+  .expandedContent {
+    padding: var(--space-4);
+  }
+}
