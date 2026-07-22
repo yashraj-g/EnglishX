@@ -114,6 +114,11 @@ const authService = {
   },
 
   async sendOtp({ email }) {
+    const user = await userRepository.findByEmail(email);
+    if (!user) {
+      throw new Error('No account found with this email');
+    }
+
     // Invalidate any previous unused OTPs for this email
     await otpRepository.invalidateAll(email);
 
@@ -219,16 +224,11 @@ const authService = {
         name: user.name,
         role: user.role,
         batchId: user.batch_id,
-        pronunciationLevel: user.pronunciation_level,
-        vocabularyLevel: user.vocabulary_level,
-        grammarLevel: user.grammar_level,
-        overallLevel: user.overall_level,
       },
       accessToken,
       refreshToken,
     };
   },
-
   async refreshAccessToken(refreshToken) {
     const tokenHash = crypto
       .createHash('sha256')

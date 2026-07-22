@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { login as apiLogin, signup as apiSignup, refreshToken, getProfile } from './api';
+import { login as apiLogin, signup as apiSignup, verifyOtp as apiVerifyOtp, refreshToken, getProfile } from './api';
 
 const AuthContext = createContext(null);
 
@@ -56,12 +56,25 @@ export function AuthProvider({ children }) {
 
   async function login(email, password) {
     const result = await apiLogin({ email, password });
+    if (result.requiresLoginOtp) {
+      // OTP step required — don't save tokens yet
+      return result;
+    }
     saveAuth(result.accessToken, result.refreshToken, result.user);
     return result.user;
   }
 
   async function signup({ name, email, password, inviteToken }) {
     const result = await apiSignup({ name, email, password, inviteToken });
+    if (result.requiresVerification) {
+      return result;
+    }
+    saveAuth(result.accessToken, result.refreshToken, result.user);
+    return result;
+  }
+
+  async function confirmOtp({ email, otp }) {
+    const result = await apiVerifyOtp({ email, otp });
     saveAuth(result.accessToken, result.refreshToken, result.user);
     return result;
   }
@@ -71,7 +84,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, signup, confirmOtp, logout, saveAuth }}>
       {children}
     </AuthContext.Provider>
   );

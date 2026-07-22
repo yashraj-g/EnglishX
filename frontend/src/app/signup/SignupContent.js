@@ -1,22 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
+import { sendOtp } from '@/lib/api';
 import styles from '../login/auth.module.css';
 
 export default function SignupContent() {
-  const { signup } = useAuth();
+  const { signup, confirmOtp } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const inviteToken = searchParams.get('token') || '';
 
+  // Step 1: signup form
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Step 2: OTP verification via AWS SES
+  const [step, setStep] = useState('form'); // 'form' | 'otp'
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const otpRefs = useRef([]);
 
   async function handleSignup(e) {
     e.preventDefault();
@@ -28,7 +37,10 @@ export default function SignupContent() {
     setLoading(true);
     try {
       const result = await signup({ name, email, password, inviteToken: inviteToken || undefined });
-      if (result?.user) {
+      if (result?.requiresVerification) {
+        setPendingEmail(result.email);
+        setStep('otp');
+      } else if (result?.user) {
         router.push(result.user.role === 'admin' ? '/admin' : '/dashboard');
       }
     } catch (err) {
@@ -37,6 +49,130 @@ export default function SignupContent() {
     setLoading(false);
   }
 
+  function handleOtpChange(index, value) {
+    if (!/^\d?$/.test(value)) return;
+    const next = [...otp];
+    next[index] = value;
+    setOtp(next);
+    if (value && index < 5) otpRefs.current[index + 1]?.focus();
+  }
+
+  function handleOtpKeyDown(index, e) {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  }
+
+  async function handleVerifyOtp(e) {
+    e.preventDefault();
+    setError('');
+    const code = otp.join('');
+    if (code.length !== 6) {
+      setError('Enter all 6 digits');
+      return;
+    }
+    setLoading(true);
+    try {
+      const result = await confirmOtp({ email: pendingEmail, otp: code });
+      router.push(result.user?.role === 'admin' ? '/admin' : '/dashboard');
+    } catch (err) {
+      setError(err.message || 'Verification failed');
+      setOtp(['', '', '', '', '', '']);
+      otpRefs.current[0]?.focus();
+    }
+    setLoading(false);
+  }
+
+  // ── OTP Step ─────────────────────────────────
+  if (step === 'otp') {
+    return (
+      <div className={styles.authPage}>
+        <div className={styles.authCard}>
+          <div className={styles.authHeader}>
+            <h1>Verify your email</h1>
+            <p>We sent a 6-digit code to <strong>{pendingEmail}</strong></p>
+          </div>
+
+          <form onSubmit={handleVerifyOtp} className={styles.authForm}>
+            {error && <div className={styles.authError}>{error}</div>}
+
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', margin: '20px 0 28px' }}>
+              {otp.map((digit, i) => (
+                <input
+                  key={i}
+                  id={`otp-${i}`}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  ref={(el) => (otpRefs.current[i] = el)}
+                  onChange={(e) => handleOtpChange(i, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                  style={{
+                    width: '46px',
+                    height: '56px',
+                    textAlign: 'center',
+                    fontSize: '24px',
+                    fontWeight: '800',
+                    fontFamily: 'monospace',
+                    border: '2px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '10px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    color: '#ffffff',
+                    outline: 'none',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#f59e0b';
+                    e.target.style.background = 'rgba(245, 158, 11, 0.15)';
+                    e.target.style.boxShadow = '0 0 10px rgba(245, 158, 11, 0.3)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                    e.target.style.background = 'rgba(255, 255, 255, 0.08)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+              ))}
+            </div>
+
+            <button type="submit" className="btn btn-primary btn-lg" disabled={loading} style={{ width: '100%' }}>
+              {loading ? 'Verifying...' : 'Verify & Continue'}
+            </button>
+          </form>
+
+          <p className={styles.authFooter} style={{ marginTop: '16px' }}>
+            Didn&apos;t receive the code?{' '}
+            <button
+              className="link-btn"
+              type="button"
+              style={{ background: 'none', border: 'none', color: '#f59e0b', fontWeight: '600', cursor: 'pointer', padding: 0 }}
+              onClick={async () => {
+                try {
+                  await sendOtp({ email: pendingEmail });
+                  setError('');
+                  setOtp(['', '', '', '', '', '']);
+                  setResendSuccess(true);
+                  setTimeout(() => setResendSuccess(false), 4000);
+                } catch {
+                  setError('Failed to resend. Try again in a moment.');
+                }
+              }}
+            >
+              Resend code
+            </button>
+          </p>
+          {resendSuccess && (
+            <div style={{ color: '#10b981', fontSize: '0.875rem', textAlign: 'center', marginTop: '8px', fontWeight: '600' }}>
+              ✓ A new 6-digit code has been sent!
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Signup Form ───────────────────────────────
   return (
     <div className={styles.authPage}>
       <div className={styles.authCard}>

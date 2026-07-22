@@ -1,28 +1,96 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
+import { sendOtp } from '@/lib/api';
 import styles from './auth.module.css';
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, confirmOtp } = useAuth();
   const router = useRouter();
+
+  // Login Mode: 'password' | 'otp'
+  const [mode, setMode] = useState('password');
+
+  // Form inputs
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e) {
+  // OTP flow state
+  const [otpStep, setOtpStep] = useState('email'); // 'email' | 'code'
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const otpRefs = useRef([]);
+
+  // ── Mode 1: Password Login ─────────────────────
+  async function handlePasswordSubmit(e) {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const user = await login(email, password);
-      router.push(user.role === 'admin' ? '/admin' : '/dashboard');
+      const result = await login(email, password);
+      if (result?.role) {
+        router.push(result.role === 'admin' ? '/admin' : '/dashboard');
+      } else if (result?.user?.role) {
+        router.push(result.user.role === 'admin' ? '/admin' : '/dashboard');
+      }
     } catch (err) {
       setError(err.message || 'Login failed');
+    }
+    setLoading(false);
+  }
+
+  // ── Mode 2: OTP Login (Step 1: Request OTP) ───
+  async function handleRequestOtp(e) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await sendOtp({ email });
+      setOtpStep('code');
+      setResendSuccess(true);
+      setTimeout(() => setResendSuccess(false), 4000);
+    } catch (err) {
+      setError(err.message || 'Failed to send OTP');
+    }
+    setLoading(false);
+  }
+
+  // ── Mode 2: OTP Login (Step 2: Verify OTP) ────
+  function handleOtpChange(index, value) {
+    if (!/^\d?$/.test(value)) return;
+    const next = [...otp];
+    next[index] = value;
+    setOtp(next);
+    if (value && index < 5) otpRefs.current[index + 1]?.focus();
+  }
+
+  function handleOtpKeyDown(index, e) {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  }
+
+  async function handleVerifyOtp(e) {
+    e.preventDefault();
+    setError('');
+    const code = otp.join('');
+    if (code.length !== 6) {
+      setError('Enter all 6 digits');
+      return;
+    }
+    setLoading(true);
+    try {
+      const result = await confirmOtp({ email, otp: code });
+      router.push(result.user?.role === 'admin' ? '/admin' : '/dashboard');
+    } catch (err) {
+      setError(err.message || 'Verification failed');
+      setOtp(['', '', '', '', '', '']);
+      otpRefs.current[0]?.focus();
     }
     setLoading(false);
   }
@@ -36,9 +104,10 @@ export default function LoginPage() {
       <div className={styles.authCard}>
         <div className={styles.authHeader}>
           <h1>Welcome back</h1>
-          <p>Sign in to continue practising</p>
+          <p>Sign in to continue your speaking journey</p>
         </div>
 
+        {/* Google OAuth Button */}
         <button
           type="button"
           onClick={handleGoogleLogin}
@@ -58,39 +127,188 @@ export default function LoginPage() {
           <span>or</span>
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.authForm}>
-          {error && <div className={styles.authError}>{error}</div>}
-
-          <div className="input-group">
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              type="email"
-              className="input"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="input-group">
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              className="input"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <button type="submit" className="btn btn-primary btn-lg" disabled={loading} style={{ width: '100%' }}>
-            {loading ? 'Signing in…' : 'Sign In'}
+        {/* Dual Sign-In Options (Password vs OTP) */}
+        <div style={{ display: 'flex', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '10px', padding: '4px', marginBottom: '20px' }}>
+          <button
+            type="button"
+            onClick={() => { setMode('password'); setError(''); }}
+            style={{
+              flex: 1,
+              padding: '10px 14px',
+              border: 'none',
+              borderRadius: '8px',
+              background: mode === 'password' ? '#6366f1' : 'transparent',
+              color: mode === 'password' ? '#ffffff' : '#94a3b8',
+              fontWeight: '600',
+              fontSize: '14px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            🔑 Sign in with Password
           </button>
-        </form>
+          <button
+            type="button"
+            onClick={() => { setMode('otp'); setOtpStep('email'); setError(''); }}
+            style={{
+              flex: 1,
+              padding: '10px 14px',
+              border: 'none',
+              borderRadius: '8px',
+              background: mode === 'otp' ? '#6366f1' : 'transparent',
+              color: mode === 'otp' ? '#ffffff' : '#94a3b8',
+              fontWeight: '600',
+              fontSize: '14px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            📩 Sign in with OTP
+          </button>
+        </div>
+
+        {/* Option 1: Password Form */}
+        {mode === 'password' && (
+          <form onSubmit={handlePasswordSubmit} className={styles.authForm}>
+            {error && <div className={styles.authError}>{error}</div>}
+
+            <div className="input-group">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                className="input"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="input-group">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                type="password"
+                className="input"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button type="submit" className="btn btn-primary btn-lg" disabled={loading} style={{ width: '100%' }}>
+              {loading ? 'Signing in...' : 'Sign In with Password'}
+            </button>
+          </form>
+        )}
+
+        {/* Option 2: OTP Form */}
+        {mode === 'otp' && (
+          <div>
+            {otpStep === 'email' ? (
+              <form onSubmit={handleRequestOtp} className={styles.authForm}>
+                {error && <div className={styles.authError}>{error}</div>}
+
+                <div className="input-group">
+                  <label htmlFor="otp-email">Email</label>
+                  <input
+                    id="otp-email"
+                    type="email"
+                    className="input"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <button type="submit" className="btn btn-primary btn-lg" disabled={loading} style={{ width: '100%' }}>
+                  {loading ? 'Sending Code...' : 'Send OTP'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyOtp} className={styles.authForm}>
+                {error && <div className={styles.authError}>{error}</div>}
+
+                <p style={{ color: '#cbd5e1', fontSize: '14px', textAlign: 'center', marginBottom: '16px' }}>
+                  Enter the 6-digit code sent to <strong>{email}</strong>
+                </p>
+
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', margin: '16px 0 24px' }}>
+                  {otp.map((digit, i) => (
+                    <input
+                      key={i}
+                      id={`otp-${i}`}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      ref={(el) => (otpRefs.current[i] = el)}
+                      onChange={(e) => handleOtpChange(i, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                      style={{
+                        width: '44px',
+                        height: '52px',
+                        textAlign: 'center',
+                        fontSize: '22px',
+                        fontWeight: '800',
+                        fontFamily: 'monospace',
+                        border: '2px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '10px',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        color: '#ffffff',
+                        outline: 'none',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = '#6366f1';
+                        e.target.style.background = 'rgba(99, 102, 241, 0.2)';
+                        e.target.style.boxShadow = '0 0 10px rgba(99, 102, 241, 0.4)';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                        e.target.style.background = 'rgba(255, 255, 255, 0.08)';
+                        e.target.style.boxShadow = 'none';
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <button type="submit" className="btn btn-primary btn-lg" disabled={loading} style={{ width: '100%' }}>
+                  {loading ? 'Verifying...' : 'Verify & Sign In'}
+                </button>
+
+                <p className={styles.authFooter} style={{ marginTop: '16px', textAlign: 'center' }}>
+                  Didn&apos;t get the code?{' '}
+                  <button
+                    type="button"
+                    style={{ background: 'none', border: 'none', color: '#818cf8', fontWeight: '600', cursor: 'pointer', padding: 0 }}
+                    onClick={async () => {
+                      try {
+                        await sendOtp({ email });
+                        setError('');
+                        setOtp(['', '', '', '', '', '']);
+                        setResendSuccess(true);
+                        setTimeout(() => setResendSuccess(false), 4000);
+                      } catch {
+                        setError('Failed to resend. Try again.');
+                      }
+                    }}
+                  >
+                    Resend code
+                  </button>
+                </p>
+                {resendSuccess && (
+                  <div style={{ color: '#10b981', fontSize: '0.875rem', textAlign: 'center', marginTop: '8px', fontWeight: '600' }}>
+                    ✓ A new 6-digit code has been sent!
+                  </div>
+                )}
+              </form>
+            )}
+          </div>
+        )}
 
         <p className={styles.authFooter}>
           Don&apos;t have an account?{' '}

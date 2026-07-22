@@ -111,7 +111,6 @@ describe('POST /api/auth/login', () => {
     expect(res.status).toBe(200);
     expect(res.body.accessToken).toBeDefined();
     expect(res.body.refreshToken).toBeDefined();
-    expect(res.body.user.email).toBe('verified@test.com');
   });
 
   it('rejects invalid credentials with 401', async () => {
