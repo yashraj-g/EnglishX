@@ -25,7 +25,6 @@ export default function PracticePage() {
   const [sessionId, setSessionId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [processing, setProcessing] = useState(false);
-  const [textInput, setTextInput] = useState('');
   const [feedback, setFeedback] = useState(null);
   const [sessionStart, setSessionStart] = useState(null);
   const [wordConfidences, setWordConfidences] = useState([]);
@@ -124,47 +123,6 @@ export default function PracticePage() {
       setMessages(prev => [
         ...prev,
         { role: 'user', content: result.user_transcript, word_confidences: result.word_confidences },
-        { role: 'ai', content: result.ai_reply },
-      ]);
-
-      speak(result.ai_reply);
-    } catch (err) {
-      console.error('Turn failed:', err);
-    }
-    setProcessing(false);
-  }
-
-  async function handleSendText(e) {
-    e.preventDefault();
-    if (!textInput.trim()) return;
-    const text = textInput;
-    setTextInput('');
-    setProcessing(true);
-
-    try {
-      const result = await processTurn({
-        sessionId,
-        textInput: text,
-        mode: selectedMode,
-        learnerLevel: user?.overallLevel || 2,
-        conversationHistory: messages.map(m => ({
-          role: m.role === 'ai' ? 'ai' : 'user',
-          content: m.content,
-        })),
-        userId: user?.id,
-        turnIndex: turnCountRef.current,
-      });
-
-      if (result.agent_audio_s3_key) {
-        registerAudioKey(token, sessionId, turnCountRef.current, result.agent_audio_s3_key, 'agent').catch(
-          (err) => console.warn('Failed to register agent audio key:', err)
-        );
-      }
-      turnCountRef.current += 1;
-
-      setMessages(prev => [
-        ...prev,
-        { role: 'user', content: text },
         { role: 'ai', content: result.ai_reply },
       ]);
 
@@ -462,39 +420,43 @@ export default function PracticePage() {
           <div ref={chatEndRef} />
         </div>
 
-        {/* Input area */}
+        {/* Input area - Voice Only Mode */}
         <div className={styles.inputArea}>
           {micError && <div className={styles.micError}>{micError}</div>}
-          <div className={styles.inputRow}>
+          <div className={styles.inputRow} style={{ justifyContent: 'center', gap: '16px' }}>
             <button
               className={`btn btn-icon ${isRecording ? styles.recordingBtn : styles.micBtn}`}
               onClick={isRecording ? handleSendAudio : startRecording}
               disabled={processing}
-              title={isRecording ? 'Stop & send' : 'Hold to speak'}
+              title={isRecording ? 'Tap to stop & send audio' : 'Tap microphone to speak'}
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '50%',
+                fontSize: '26px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: isRecording ? '0 0 20px rgba(239, 68, 68, 0.6)' : '0 0 15px rgba(99, 102, 241, 0.4)',
+                cursor: processing ? 'not-allowed' : 'pointer',
+              }}
             >
               {isRecording ? '⏹' : '🎤'}
             </button>
-            {isRecording && (
-              <div className={styles.recordingIndicator}>
-                <span className={styles.recordingDot} />
-                Recording... tap to send
-              </div>
-            )}
-            {!isRecording && (
-              <form className={styles.textForm} onSubmit={handleSendText}>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="Or type your message..."
-                  value={textInput}
-                  onChange={(e) => setTextInput(e.target.value)}
-                  disabled={processing}
-                />
-                <button type="submit" className="btn btn-primary btn-sm" disabled={processing || !textInput.trim()}>
-                  Send
-                </button>
-              </form>
-            )}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              {isRecording ? (
+                <div className={styles.recordingIndicator}>
+                  <span className={styles.recordingDot} />
+                  <strong>Recording voice...</strong>
+                  <span style={{ fontSize: '12px', color: '#94a3b8', display: 'block' }}>Tap ⏹ button to send audio</span>
+                </div>
+              ) : (
+                <div>
+                  <strong style={{ color: '#ffffff', fontSize: '15px', display: 'block' }}>{processing ? 'AI is processing...' : 'Voice-only Practice'}</strong>
+                  <span style={{ fontSize: '13px', color: '#94a3b8', display: 'block' }}>{processing ? 'Please wait a moment' : 'Tap 🎤 microphone button to start speaking'}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

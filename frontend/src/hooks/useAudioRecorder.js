@@ -3,8 +3,9 @@
 import { useState, useRef, useCallback } from 'react';
 
 /**
- * Custom hook for audio recording via MediaRecorder API.
- * Returns base64-encoded audio data for sending to the STT service.
+ * Custom hook for high-clarity voice recording via MediaRecorder API.
+ * Employs hardware Auto Gain Control (AGC), noise suppression, and high-bitrate Opus encoding
+ * so distant speech is captured clearly while blocking background hums/noise.
  */
 export function useAudioRecorder() {
   const [isRecording, setIsRecording] = useState(false);
@@ -20,9 +21,17 @@ export function useAudioRecorder() {
     try {
       stream.current = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          sampleRate: 16000,
+          echoCancellation: { ideal: true },
+          noiseSuppression: { ideal: true },
+          autoGainControl: { ideal: true }, // Automatic Gain Control boosts distant/quiet speech
+          channelCount: 1,
+          sampleRate: { ideal: 48000, min: 16000 },
+          sampleSize: { ideal: 16 },
+          // Advanced WebRTC noise isolation & voice enhancement flags
+          googEchoCancellation: { ideal: true },
+          googAutoGainControl: { ideal: true },
+          googNoiseSuppression: { ideal: true },
+          googHighpassFilter: { ideal: true },
         },
       });
 
@@ -30,6 +39,7 @@ export function useAudioRecorder() {
         mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
           ? 'audio/webm;codecs=opus'
           : 'audio/webm',
+        audioBitsPerSecond: 128000, // 128kbps high quality audio bitrate
       });
 
       mediaRecorder.current.ondataavailable = (e) => {
