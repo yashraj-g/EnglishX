@@ -34,7 +34,7 @@ if (isGoogleConfigured) {
               email,
               passwordHash: crypto.randomBytes(32).toString('hex'),
               name: profile.displayName || email.split('@')[0],
-              role: 'admin',
+              role: 'learner',
               batchId: null,
             });
           }
