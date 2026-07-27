@@ -3,6 +3,7 @@
 import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { getProfile } from '@/lib/api';
 
 function OAuthCallbackContent() {
   const router = useRouter();
@@ -25,10 +26,19 @@ function OAuthCallbackContent() {
       return;
     }
 
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
+    async function completeAuth() {
+      try {
+        const profile = await getProfile(accessToken);
+        saveAuth(accessToken, refreshToken, profile);
+        router.replace(profile.role === 'admin' || role === 'admin' ? '/admin' : '/dashboard');
+      } catch {
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        router.replace(role === 'admin' ? '/admin' : '/dashboard');
+      }
+    }
 
-    router.replace(role === 'admin' ? '/admin' : '/dashboard');
+    completeAuth();
   }, [searchParams, router, saveAuth]);
 
   return (

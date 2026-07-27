@@ -3,7 +3,7 @@
 # Run this directly on the EC2 instance, or via GitHub Actions SSH deploy job.
 # Prerequisites: Docker, Docker Compose, Certbot, Git must be installed.
 #
-# Domain  : englishx.duckdns.org  (DuckDNS — points to EC2 13.233.95.32)
+# Domain  : englishx-app.duckdns.org  (DuckDNS — points to EC2)
 # Frontend: Vercel (not served from this EC2)
 # EC2     : ms1-core-api (port 3001) + ms2-speech-agent (port 8000) behind NGINX
 
@@ -11,7 +11,7 @@ set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 INFRA_DIR="$REPO_DIR/infra"
-DOMAIN="englishx.duckdns.org"
+DOMAIN="englishx-app.duckdns.org"
 EMAIL="valuedrocks@gmail.com"
 CERTBOT_WEBROOT="/var/www/certbot"
 

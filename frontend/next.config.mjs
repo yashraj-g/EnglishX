@@ -11,12 +11,12 @@ const nextConfig = {
     const ms1Url =
       process.env.MS1_URL ||
       process.env.NEXT_PUBLIC_MS1_URL ||
-      (process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : 'https://englishx.duckdns.org');
+      (process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : 'https://englishx-app.duckdns.org');
 
     const ms2Url =
       process.env.MS2_URL ||
       process.env.NEXT_PUBLIC_MS2_URL ||
-      (process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : 'https://englishx.duckdns.org');
+      (process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : 'https://englishx-app.duckdns.org');
 
     return [
       {

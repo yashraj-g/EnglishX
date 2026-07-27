@@ -13,7 +13,7 @@ services:
       - NODE_OPTIONS=--dns-result-order=ipv4first
       - MS2_BASE_URL=http://ms2-speech-agent:8000
       # Vercel frontend URL — CORS origin and invite link base
-      - FRONTEND_URL=https://englishx.vercel.app
+      - FRONTEND_URL=https://english-x-omega.vercel.app
     restart: unless-stopped
 
   # ms2 — Speech Agent (FastAPI + LangGraph)
@@ -37,8 +37,8 @@ services:
       - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - certbot_webroot:/var/www/certbot:ro
-      - letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - ms1-core-api
       - ms2-speech-agent
@@ -50,11 +50,7 @@ services:
     profiles:
       - certbot
     volumes:
-      - letsencrypt:/etc/letsencrypt
-      - certbot_webroot:/var/www/certbot
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/www/certbot:/var/www/certbot
     entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $${!}; done"
     restart: unless-stopped
-
-volumes:
-  certbot_webroot:
-  letsencrypt:
