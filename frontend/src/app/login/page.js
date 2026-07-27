@@ -79,14 +79,15 @@ export default function LoginPage() {
   async function handleVerifyOtp(e) {
     e.preventDefault();
     setError('');
-    const code = otp.join('');
+    const code = otp.join('').trim();
     if (code.length !== 6) {
       setError('Enter all 6 digits');
       return;
     }
     setLoading(true);
     try {
-      const result = await confirmOtp({ email, otp: code });
+      const result = await confirmOtp({ email: email.trim(), otp: code });
+      saveAuth(result.accessToken, result.refreshToken, result.user);
       router.push(result.user?.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err) {
       setError(err.message || 'Verification failed');

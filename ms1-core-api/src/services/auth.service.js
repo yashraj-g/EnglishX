@@ -114,8 +114,9 @@ const authService = {
   },
 
   async sendOtp({ email }) {
+    const cleanEmail = email.toLowerCase().trim();
     // Invalidate any previous unused OTPs for this email
-    await otpRepository.invalidateAll(email);
+    await otpRepository.invalidateAll(cleanEmail);
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
@@ -125,21 +126,24 @@ const authService = {
 
     await otpRepository.create({
       id: uuidv4(),
-      email,
+      email: cleanEmail,
       otpHash,
       expiresAt,
     });
 
-    await emailService.sendOtpEmail({ to: email, otp });
+    await emailService.sendOtpEmail({ to: cleanEmail, otp });
   },
 
   async verifyOtp({ email, otp }) {
-    const record = await otpRepository.findValid(email);
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanOtp = String(otp).trim();
+
+    const record = await otpRepository.findValid(cleanEmail);
     if (!record) {
       throw new Error('OTP is invalid or has expired');
     }
 
-    const submittedHash = crypto.createHash('sha256').update(otp).digest('hex');
+    const submittedHash = crypto.createHash('sha256').update(cleanOtp).digest('hex');
     if (submittedHash !== record.otp_hash) {
       throw new Error('Incorrect OTP');
     }
@@ -147,14 +151,14 @@ const authService = {
     await otpRepository.markUsed(record.id);
 
     // Mark the user as verified and issue tokens (auto-create account if new user)
-    let user = await userRepository.findByEmail(email);
+    let user = await userRepository.findByEmail(cleanEmail);
     if (!user) {
       const userId = uuidv4();
       user = await userRepository.create({
         id: userId,
-        email,
+        email: cleanEmail,
         passwordHash: crypto.randomBytes(32).toString('hex'),
-        name: email.split('@')[0],
+        name: cleanEmail.split('@')[0],
         role: 'learner',
         batchId: null,
       });
