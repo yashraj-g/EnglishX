@@ -37,4 +37,15 @@ router.get('/levels/trend/:dimension', authenticate, async (req, res) => {
   }
 });
 
+const userRepository = require('../repositories/user.repository');
+
+router.delete('/users/:id', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    await userRepository.delete(req.params.id);
+    res.json({ message: 'User deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

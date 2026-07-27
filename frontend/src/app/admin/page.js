@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import { getAdminDashboard, getBatches, createBatch, createInvite, getInvites } from '@/lib/api';
+import { getAdminDashboard, getBatches, createBatch, createInvite, getInvites, deleteUser } from '@/lib/api';
 import styles from './admin.module.css';
 
 export default function AdminPage() {
@@ -85,6 +85,23 @@ export default function AdminPage() {
     setTimeout(() => setFormSuccess(''), 4000);
   }
 
+  async function handleDeleteStudent(id, name) {
+    if (!confirm(`Are you sure you want to delete student "${name}"?`)) return;
+    setFormError('');
+    setFormSuccess('');
+    try {
+      await deleteUser(token, id);
+      setDashboard(prev => ({
+        ...prev,
+        students: prev?.students ? prev.students.filter(s => s.id !== id) : [],
+        totalStudents: Math.max(0, (prev?.totalStudents || 1) - 1),
+      }));
+      setFormSuccess(`Student "${name}" deleted successfully.`);
+    } catch (err) {
+      setFormError(err.message || 'Failed to delete student.');
+    }
+  }
+
   if (authLoading || loading) {
     return (
       <div className={styles.page}>
@@ -155,6 +172,7 @@ export default function AdminPage() {
                   <th>Overall</th>
                   <th>Streak</th>
                   <th>Last Active</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -179,6 +197,16 @@ export default function AdminPage() {
                       {s.lastPracticedAt
                         ? new Date(s.lastPracticedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
                         : 'Never'}
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn-ghost btn-xs"
+                        style={{ color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.1)', cursor: 'pointer' }}
+                        onClick={() => handleDeleteStudent(s.id, s.name)}
+                        title="Delete Student"
+                      >
+                        🗑️ Delete
+                      </button>
                     </td>
                   </tr>
                 ))}

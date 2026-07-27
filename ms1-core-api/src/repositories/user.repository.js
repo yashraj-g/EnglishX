@@ -86,6 +86,16 @@ const userRepository = {
     );
     return result.rows;
   },
+
+  async delete(id) {
+    await query('DELETE FROM session_audio WHERE user_id = $1', [id]);
+    await query('DELETE FROM audio_turns WHERE user_id = $1', [id]);
+    await query('DELETE FROM feedback_records WHERE user_id = $1', [id]);
+    await query('DELETE FROM session_turns WHERE session_id IN (SELECT id FROM practice_sessions WHERE user_id = $1)', [id]);
+    await query('DELETE FROM practice_sessions WHERE user_id = $1', [id]);
+    await query('DELETE FROM refresh_tokens WHERE user_id = $1', [id]);
+    await query('DELETE FROM users WHERE id = $1', [id]);
+  },
 };
 
 module.exports = userRepository;

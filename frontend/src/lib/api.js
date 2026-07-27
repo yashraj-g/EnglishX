@@ -209,3 +209,10 @@ export async function registerAudioKey(token, sessionId, turnIndex, s3Key, role 
     body: JSON.stringify({ turnIndex, s3Key, role }),
   });
 }
+
+export async function deleteUser(token, userId) {
+  return request(`${API_BASE}/dashboard/users/${userId}`, {
+    method: 'DELETE',
+    headers: getHeaders(token),
+  });
+}
