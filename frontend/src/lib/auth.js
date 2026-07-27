@@ -13,6 +13,7 @@ export function AuthProvider({ children }) {
   const saveAuth = useCallback((accessToken, refresh, userData) => {
     setToken(accessToken);
     setUser(userData);
+    setLoading(false);
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refresh);
   }, []);

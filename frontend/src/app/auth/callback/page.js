@@ -26,15 +26,16 @@ function OAuthCallbackContent() {
       return;
     }
 
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+
     async function completeAuth() {
       try {
         const profile = await getProfile(accessToken);
         saveAuth(accessToken, refreshToken, profile);
-        router.replace(profile.role === 'admin' || role === 'admin' ? '/admin' : '/dashboard');
+        window.location.href = (profile.role === 'admin' || role === 'admin' ? '/admin' : '/dashboard');
       } catch {
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        router.replace(role === 'admin' ? '/admin' : '/dashboard');
+        window.location.href = (role === 'admin' ? '/admin' : '/dashboard');
       }
     }
 
