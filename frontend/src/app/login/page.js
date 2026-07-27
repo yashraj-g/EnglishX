@@ -277,9 +277,30 @@ export default function LoginPage() {
               <form onSubmit={handleVerifyOtp} className={styles.authForm}>
                 {error && <div className={styles.authError}>{error}</div>}
 
-                <p style={{ color: '#cbd5e1', fontSize: '14px', textAlign: 'center', marginBottom: '16px' }}>
+                <p style={{ color: '#cbd5e1', fontSize: '14px', textAlign: 'center', marginBottom: '12px' }}>
                   Enter the 6-digit code sent to <strong>{email}</strong>
                 </p>
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  background: 'rgba(99, 102, 241, 0.15)',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                  borderRadius: '20px',
+                  padding: '6px 14px',
+                  width: 'fit-content',
+                  margin: '0 auto 16px',
+                  fontSize: '13px',
+                  color: '#a5b4fc',
+                  fontWeight: '600'
+                }}>
+                  <span>⏱️ Code expires in:</span>
+                  <strong style={{ color: '#ffffff', fontSize: '15px', fontFamily: 'monospace' }}>
+                    {formatTimer(timer)}
+                  </strong>
+                </div>
 
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', margin: '16px 0 24px' }}>
                   {otp.map((digit, i) => (
