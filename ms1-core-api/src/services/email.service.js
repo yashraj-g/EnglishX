@@ -101,7 +101,35 @@ const emailService = {
   },
 
   async _send({ to, subject, html }) {
-    // 1. Send via Gmail / SMTP if configured
+    // 1. Send via Resend HTTP API if configured
+    if (config.resend && config.resend.apiKey) {
+      try {
+        const resendRes = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${config.resend.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'EnglishX <onboarding@resend.dev>',
+            to: [to],
+            subject,
+            html,
+          }),
+        });
+        const resendData = await resendRes.json().catch(() => ({}));
+        if (resendRes.ok) {
+          console.log(`[EMAIL SENT] Sent real email to ${to} via Resend. ID: ${resendData.id}`);
+          return { messageId: resendData.id, status: 'sent' };
+        } else {
+          console.error('Resend email error:', resendData);
+        }
+      } catch (err) {
+        console.error('Resend API call exception:', err.message);
+      }
+    }
+
+    // 2. Send via Gmail / SMTP if configured
     if (config.smtp.user && config.smtp.pass) {
       try {
         const nodemailer = require('nodemailer');

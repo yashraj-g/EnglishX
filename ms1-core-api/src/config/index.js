@@ -29,6 +29,10 @@ const config = {
     pass: process.env.SMTP_PASS || process.env.GMAIL_APP_PASS || '',
   },
 
+  resend: {
+    apiKey: process.env.RESEND_API_KEY || '',
+  },
+
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID || '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
