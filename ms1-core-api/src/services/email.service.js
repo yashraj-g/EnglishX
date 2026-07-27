@@ -101,35 +101,31 @@ const emailService = {
   },
 
   async _send({ to, subject, html }) {
-    // 1. Send via Resend HTTP API if configured
-    if (config.resend && config.resend.apiKey) {
+    // 1. Send via Gmail / SMTP if configured
+    if (config.smtp.user && config.smtp.pass) {
       try {
-        const resendRes = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${config.resend.apiKey}`,
-            'Content-Type': 'application/json',
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: config.smtp.user,
+            pass: config.smtp.pass,
           },
-          body: JSON.stringify({
-            from: 'EnglishX <onboarding@resend.dev>',
-            to: [to],
-            subject,
-            html,
-          }),
         });
-        const resendData = await resendRes.json().catch(() => ({}));
-        if (resendRes.ok) {
-          console.log(`[EMAIL SENT] Sent real email to ${to} via Resend. ID: ${resendData.id}`);
-          return { messageId: resendData.id, status: 'sent' };
-        } else {
-          console.error('Resend email error:', resendData);
-        }
+
+        const result = await transporter.sendMail({
+          from: `EnglishX <${config.smtp.user}>`,
+          to,
+          subject,
+          html,
+        });
+
+        console.log(`[EMAIL SENT] Sent real email to ${to} via Gmail SMTP. MessageId: ${result.messageId}`);
+        return { messageId: result.messageId, status: 'sent' };
       } catch (err) {
-        console.error('Resend API call exception:', err.message);
+        console.error('Gmail SMTP send failed:', err.message);
       }
     }
-
-    // 2. Send via Gmail / SMTP if configured
     if (config.smtp.user && config.smtp.pass) {
       try {
         const nodemailer = require('nodemailer');

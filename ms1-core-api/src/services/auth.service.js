@@ -114,11 +114,6 @@ const authService = {
   },
 
   async sendOtp({ email }) {
-    const user = await userRepository.findByEmail(email);
-    if (!user) {
-      throw new Error('No account found with this email');
-    }
-
     // Invalidate any previous unused OTPs for this email
     await otpRepository.invalidateAll(email);
 
@@ -151,9 +146,19 @@ const authService = {
 
     await otpRepository.markUsed(record.id);
 
-    // Mark the user as verified and issue tokens
-    const user = await userRepository.findByEmail(email);
-    if (!user) throw new Error('User not found');
+    // Mark the user as verified and issue tokens (auto-create account if new user)
+    let user = await userRepository.findByEmail(email);
+    if (!user) {
+      const userId = uuidv4();
+      user = await userRepository.create({
+        id: userId,
+        email,
+        passwordHash: crypto.randomBytes(32).toString('hex'),
+        name: email.split('@')[0],
+        role: 'learner',
+        batchId: null,
+      });
+    }
 
     await userRepository.markEmailVerified(user.id);
 
