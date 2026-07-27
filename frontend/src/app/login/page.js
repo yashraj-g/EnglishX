@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
@@ -8,7 +8,7 @@ import { sendOtp } from '@/lib/api';
 import styles from './auth.module.css';
 
 export default function LoginPage() {
-  const { login, confirmOtp } = useAuth();
+  const { login, confirmOtp, saveAuth } = useAuth();
   const router = useRouter();
 
   // Login Mode: 'password' | 'otp'
@@ -25,7 +25,20 @@ export default function LoginPage() {
   const [otpStep, setOtpStep] = useState('email'); // 'email' | 'code'
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [resendSuccess, setResendSuccess] = useState(false);
+  const [timer, setTimer] = useState(60);
   const otpRefs = useRef([]);
+
+  useEffect(() => {
+    let interval = null;
+    if (otpStep === 'code' && timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [otpStep, timer]);
 
   // ── Mode 1: Password Login ─────────────────────
   async function handlePasswordSubmit(e) {
@@ -47,12 +60,13 @@ export default function LoginPage() {
 
   // ── Mode 2: OTP Login (Step 1: Request OTP) ───
   async function handleRequestOtp(e) {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      await sendOtp({ email });
+      await sendOtp({ email: email.trim() });
       setOtpStep('code');
+      setTimer(60);
       setResendSuccess(true);
       setTimeout(() => setResendSuccess(false), 4000);
     } catch (err) {
@@ -305,23 +319,19 @@ export default function LoginPage() {
 
                 <p className={styles.authFooter} style={{ marginTop: '16px', textAlign: 'center' }}>
                   Didn&apos;t get the code?{' '}
-                  <button
-                    type="button"
-                    style={{ background: 'none', border: 'none', color: '#818cf8', fontWeight: '600', cursor: 'pointer', padding: 0 }}
-                    onClick={async () => {
-                      try {
-                        await sendOtp({ email });
-                        setError('');
-                        setOtp(['', '', '', '', '', '']);
-                        setResendSuccess(true);
-                        setTimeout(() => setResendSuccess(false), 4000);
-                      } catch {
-                        setError('Failed to resend. Try again.');
-                      }
-                    }}
-                  >
-                    Resend code
-                  </button>
+                  {timer > 0 ? (
+                    <span style={{ color: '#94a3b8', fontWeight: '600' }}>
+                      Resend code in <strong style={{ color: '#818cf8' }}>{timer}s</strong>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      style={{ background: 'none', border: 'none', color: '#818cf8', fontWeight: '600', cursor: 'pointer', padding: 0 }}
+                      onClick={handleRequestOtp}
+                    >
+                      Resend OTP
+                    </button>
+                  )}
                 </p>
                 {resendSuccess && (
                   <div style={{ color: '#10b981', fontSize: '0.875rem', textAlign: 'center', marginTop: '8px', fontWeight: '600' }}>
