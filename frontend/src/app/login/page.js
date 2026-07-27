@@ -25,8 +25,14 @@ export default function LoginPage() {
   const [otpStep, setOtpStep] = useState('email'); // 'email' | 'code'
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [resendSuccess, setResendSuccess] = useState(false);
-  const [timer, setTimer] = useState(60);
+  const [timer, setTimer] = useState(120);
   const otpRefs = useRef([]);
+
+  function formatTimer(sec) {
+    const mins = Math.floor(sec / 60);
+    const secs = sec % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  }
 
   useEffect(() => {
     let interval = null;
@@ -66,9 +72,11 @@ export default function LoginPage() {
     try {
       await sendOtp({ email: email.trim() });
       setOtpStep('code');
-      setTimer(60);
+      setTimer(120);
+      setOtp(['', '', '', '', '', '']);
       setResendSuccess(true);
       setTimeout(() => setResendSuccess(false), 4000);
+      setTimeout(() => otpRefs.current[0]?.focus(), 100);
     } catch (err) {
       setError(err.message || 'Failed to send OTP');
     }
@@ -321,13 +329,14 @@ export default function LoginPage() {
                   Didn&apos;t get the code?{' '}
                   {timer > 0 ? (
                     <span style={{ color: '#94a3b8', fontWeight: '600' }}>
-                      Resend code in <strong style={{ color: '#818cf8' }}>{timer}s</strong>
+                      Resend code in <strong style={{ color: '#818cf8' }}>{formatTimer(timer)}</strong>
                     </span>
                   ) : (
                     <button
                       type="button"
                       style={{ background: 'none', border: 'none', color: '#818cf8', fontWeight: '600', cursor: 'pointer', padding: 0 }}
                       onClick={handleRequestOtp}
+                      disabled={loading}
                     >
                       Resend OTP
                     </button>

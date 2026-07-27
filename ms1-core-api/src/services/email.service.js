@@ -14,6 +14,22 @@ try {
   console.warn('AWS SES not configured — emails will be logged to console');
 }
 
+let smtpTransporter = null;
+if (config.smtp.user && config.smtp.pass) {
+  try {
+    const nodemailer = require('nodemailer');
+    smtpTransporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: config.smtp.user,
+        pass: config.smtp.pass,
+      },
+    });
+  } catch (err) {
+    console.warn('Failed to initialize Gmail SMTP transporter:', err.message);
+  }
+}
+
 const emailService = {
   async sendInviteEmail({ to, batchName, inviteLink }) {
     const subject = `You're invited to join EnglishX — ${batchName}`;
@@ -101,43 +117,10 @@ const emailService = {
   },
 
   async _send({ to, subject, html }) {
-    // 1. Send via Gmail / SMTP if configured
-    if (config.smtp.user && config.smtp.pass) {
+    // 1. Send via Gmail SMTP if configured
+    if (smtpTransporter) {
       try {
-        const nodemailer = require('nodemailer');
-        const transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-            user: config.smtp.user,
-            pass: config.smtp.pass,
-          },
-        });
-
-        const result = await transporter.sendMail({
-          from: `EnglishX <${config.smtp.user}>`,
-          to,
-          subject,
-          html,
-        });
-
-        console.log(`[EMAIL SENT] Sent real email to ${to} via Gmail SMTP. MessageId: ${result.messageId}`);
-        return { messageId: result.messageId, status: 'sent' };
-      } catch (err) {
-        console.error('Gmail SMTP send failed:', err.message);
-      }
-    }
-    if (config.smtp.user && config.smtp.pass) {
-      try {
-        const nodemailer = require('nodemailer');
-        const transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-            user: config.smtp.user,
-            pass: config.smtp.pass,
-          },
-        });
-
-        const result = await transporter.sendMail({
+        const result = await smtpTransporter.sendMail({
           from: `EnglishX <${config.smtp.user}>`,
           to,
           subject,
