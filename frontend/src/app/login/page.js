@@ -1,5 +1,6 @@
 'use client';
 
+// Vercel build cache invalidation timestamp: 2026-07-28T05:15:30Z
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
