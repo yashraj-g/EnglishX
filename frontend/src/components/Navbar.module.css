@@ -196,20 +196,20 @@
   text-align: left;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .inner {
     padding: var(--space-3) var(--space-4);
   }
 
   .desktopLinks {
-    display: none;
+    display: none !important;
   }
 
   .mobileMenuBtn {
-    display: block;
+    display: block !important;
   }
 
   .mobileMenu {
-    display: flex;
+    display: flex !important;
   }
 }
