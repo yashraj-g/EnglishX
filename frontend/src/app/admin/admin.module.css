@@ -207,5 +207,20 @@
 
 @media (max-width: 768px) {
   .statsGrid { grid-template-columns: repeat(2, 1fr); }
-  .inlineForm { flex-direction: column; }
+  .inlineForm { flex-direction: column; align-items: stretch; }
+  .skeletons { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .statsGrid { grid-template-columns: repeat(2, 1fr); gap: var(--space-2); }
+  .statCard { padding: var(--space-3); }
+  .statNum { font-size: 1.5rem; }
+  .statLabel { font-size: 0.6875rem; }
+  .skeletons { grid-template-columns: 1fr; }
+  .tableWrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+    margin-bottom: var(--space-4);
+  }
 }
