@@ -113,11 +113,17 @@
 
 /* ─── Table ─── */
 .tableWrap {
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: var(--space-4);
+  box-sizing: border-box;
 }
 
 .table {
   width: 100%;
+  min-width: 650px;
   border-collapse: separate;
   border-spacing: 0;
 }

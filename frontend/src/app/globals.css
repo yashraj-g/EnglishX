@@ -138,6 +138,20 @@ body::before {
   z-index: -1;
 }
 
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--space-4);
+  }
+}
+
 a {
   color: var(--primary-400);
   text-decoration: none;
