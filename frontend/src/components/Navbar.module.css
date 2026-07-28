@@ -2,11 +2,10 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(8, 8, 10, 0.92);
+  background: rgba(8, 8, 10, 0.95);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-subtle);
   width: 100%;
-  overflow: hidden;
 }
 
 .inner {
@@ -16,7 +15,6 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: var(--space-3) var(--space-6);
-  gap: var(--space-3);
   width: 100%;
   box-sizing: border-box;
 }
@@ -28,7 +26,6 @@
   text-decoration: none;
   color: var(--text-primary);
   flex-shrink: 0;
-  z-index: 2;
 }
 
 .logoImage {
@@ -46,28 +43,10 @@
   white-space: nowrap;
 }
 
-.linksContainer {
-  display: flex;
-  align-items: center;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE / Edge */
-  flex-shrink: 1;
-  max-width: 100%;
-}
-
-.linksContainer::-webkit-scrollbar {
-  display: none; /* Chrome / Safari */
-}
-
-.links {
+.desktopLinks {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .link {
@@ -83,7 +62,6 @@
   border: 1px solid transparent;
   transition: all var(--transition-fast);
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .link:hover {
@@ -110,7 +88,6 @@
   margin-left: var(--space-2);
   padding-left: var(--space-2);
   border-left: 1px solid var(--border-subtle);
-  flex-shrink: 0;
 }
 
 .avatar {
@@ -130,40 +107,109 @@
 .logoutBtn {
   font-size: 0.8125rem;
   white-space: nowrap;
-  flex-shrink: 0;
+}
+
+/* ─── Mobile Menu Toggle & Overlay ─── */
+.mobileMenuBtn {
+  display: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.mobileMenu {
+  display: none;
+  flex-direction: column;
+  background: #0a0a0d;
+  border-bottom: 1px solid var(--border-default);
+  padding: var(--space-4) var(--space-6);
+  gap: var(--space-2);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.mobileUserInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-bottom: var(--space-2);
+}
+
+.mobileUserDetails {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobileUserName {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+}
+
+.mobileUserEmail {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.mobileDivider {
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  margin: var(--space-2) 0;
+}
+
+.mobileLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.mobileLink:hover, .mobileActive {
+  color: #00f3ff;
+  background: rgba(0, 243, 255, 0.1);
+  border-left: 3px solid #00f3ff;
+}
+
+.mobileLogoutBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  color: var(--danger-400);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
 }
 
 @media (max-width: 768px) {
   .inner {
-    padding: var(--space-2) var(--space-3);
-    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
   }
 
-  .logoText {
-    font-size: 1.1rem;
+  .desktopLinks {
+    display: none;
   }
 
-  .linksContainer {
-    max-width: calc(100vw - 140px);
+  .mobileMenuBtn {
+    display: block;
   }
 
-  .links {
-    gap: var(--space-2);
-    padding-bottom: 2px;
-  }
-
-  .link {
-    padding: 6px 10px;
-    font-size: 0.8125rem;
-  }
-
-  .link span {
-    display: inline;
-  }
-
-  .userMenu {
-    margin-left: var(--space-1);
-    padding-left: var(--space-2);
-    gap: 6px;
+  .mobileMenu {
+    display: flex;
   }
 }
