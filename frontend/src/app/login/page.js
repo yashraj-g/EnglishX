@@ -285,19 +285,19 @@ export default function LoginPage() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '6px',
-                  background: 'rgba(99, 102, 241, 0.15)',
-                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                  gap: '8px',
+                  background: 'rgba(245, 158, 11, 0.15)',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
                   borderRadius: '20px',
-                  padding: '6px 14px',
+                  padding: '8px 16px',
                   width: 'fit-content',
                   margin: '0 auto 16px',
-                  fontSize: '13px',
-                  color: '#a5b4fc',
-                  fontWeight: '600'
+                  fontSize: '14px',
+                  color: '#ffffff',
+                  fontWeight: '700'
                 }}>
                   <span>⏱️ Code expires in:</span>
-                  <strong style={{ color: '#ffffff', fontSize: '15px', fontFamily: 'monospace' }}>
+                  <strong style={{ color: '#fbbf24', fontSize: '16px', fontFamily: 'monospace' }}>
                     {formatTimer(timer)}
                   </strong>
                 </div>
@@ -321,21 +321,21 @@ export default function LoginPage() {
                         fontSize: '22px',
                         fontWeight: '800',
                         fontFamily: 'monospace',
-                        border: '2px solid rgba(255, 255, 255, 0.2)',
+                        border: '2px solid rgba(255, 255, 255, 0.3)',
                         borderRadius: '10px',
-                        background: 'rgba(255, 255, 255, 0.08)',
+                        background: 'rgba(255, 255, 255, 0.12)',
                         color: '#ffffff',
                         outline: 'none',
                         transition: 'all 0.2s ease',
                       }}
                       onFocus={(e) => {
-                        e.target.style.borderColor = '#6366f1';
-                        e.target.style.background = 'rgba(99, 102, 241, 0.2)';
-                        e.target.style.boxShadow = '0 0 10px rgba(99, 102, 241, 0.4)';
+                        e.target.style.borderColor = '#f59e0b';
+                        e.target.style.background = 'rgba(245, 158, 11, 0.2)';
+                        e.target.style.boxShadow = '0 0 12px rgba(245, 158, 11, 0.4)';
                       }}
                       onBlur={(e) => {
-                        e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                        e.target.style.background = 'rgba(255, 255, 255, 0.08)';
+                        e.target.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                        e.target.style.background = 'rgba(255, 255, 255, 0.12)';
                         e.target.style.boxShadow = 'none';
                       }}
                     />
@@ -346,16 +346,16 @@ export default function LoginPage() {
                   {loading ? 'Verifying...' : 'Verify & Sign In'}
                 </button>
 
-                <p className={styles.authFooter} style={{ marginTop: '16px', textAlign: 'center' }}>
+                <p className={styles.authFooter} style={{ marginTop: '16px', textAlign: 'center', color: '#ffffff' }}>
                   Didn&apos;t get the code?{' '}
                   {timer > 0 ? (
-                    <span style={{ color: '#94a3b8', fontWeight: '600' }}>
-                      Resend code in <strong style={{ color: '#818cf8' }}>{formatTimer(timer)}</strong>
+                    <span style={{ color: '#e2e8f0', fontWeight: '600' }}>
+                      Resend code in <strong style={{ color: '#fbbf24', fontSize: '15px' }}>{formatTimer(timer)}</strong>
                     </span>
                   ) : (
                     <button
                       type="button"
-                      style={{ background: 'none', border: 'none', color: '#818cf8', fontWeight: '600', cursor: 'pointer', padding: 0 }}
+                      style={{ background: 'none', border: 'none', color: '#fbbf24', fontWeight: '700', cursor: 'pointer', padding: 0 }}
                       onClick={handleRequestOtp}
                       disabled={loading}
                     >
